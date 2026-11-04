@@ -42,6 +42,7 @@ class Chunk(BaseModel):
 
 class YouTubeIngestRequest(BaseModel):
     url: str = Field(..., examples=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+    language: str | None = Field(default=None, pattern=r"^[a-z]{2}$", examples=["en"])
 
 
 class IngestResponse(BaseModel):

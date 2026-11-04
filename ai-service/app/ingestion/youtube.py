@@ -83,11 +83,18 @@ def download_audio(video_id: str, target_dir: Path) -> Path:
         raise TranscriptionFailedError("Could not download the audio of this video.") from e
 
 
-def ingest_youtube(video_id: str) -> Transcript:
+def preferred_languages(language: str | None, defaults: list[str]) -> list[str]:
+    """The chosen language first, then the defaults, without duplicates."""
+    ordered = ([language] if language else []) + defaults
+    return list(dict.fromkeys(ordered))
+
+
+def ingest_youtube(video_id: str, language: str | None = None) -> Transcript:
     settings = get_settings()
     info = fetch_video_info(video_id)
 
-    result = fetch_youtube_transcript(video_id, settings.transcript_languages)
+    languages = preferred_languages(language, settings.transcript_languages)
+    result = fetch_youtube_transcript(video_id, languages)
     if result is not None:
         segments, language = result
         source = "youtube_transcript"
@@ -95,7 +102,7 @@ def ingest_youtube(video_id: str) -> Transcript:
         log.info("No YouTube transcript for %s, using Whisper", video_id)
         with tempfile.TemporaryDirectory() as tmp:
             audio = download_audio(video_id, Path(tmp))
-            segments, language = whisper_transcriber.transcribe(audio)
+            segments, language = whisper_transcriber.transcribe(audio, language)
         source = "whisper"
 
     return Transcript(
