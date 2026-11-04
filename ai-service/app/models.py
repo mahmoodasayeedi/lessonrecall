@@ -50,6 +50,8 @@ class YouTubeIngestRequest(BaseModel):
 
 
 class IngestResponse(BaseModel):
+    course_id: str
+    stored_chunks: int
     video_id: str
     title: str
     source_type: Literal["youtube", "upload"]
