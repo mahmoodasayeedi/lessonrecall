@@ -1,0 +1,27 @@
+# Secrets - never commit
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+ai-service/tmp/
+
+# Java
+backend-java/target/
+backend-java/build/
+*.class
+.idea/
+*.iml
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
