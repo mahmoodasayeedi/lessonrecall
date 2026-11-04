@@ -90,6 +90,8 @@ def _build_response(transcript: Transcript, course_id: str) -> IngestResponse:
     stored = upsert_chunks(chunks, course_id)
     duration = int(round(max(s.end for s in transcript.segments)))
     return IngestResponse(
+        course_id=course_id,        
+        stored_chunks=stored,       
         video_id=transcript.video_id,
         title=transcript.title,
         source_type=transcript.source_type,
@@ -98,8 +100,7 @@ def _build_response(transcript: Transcript, course_id: str) -> IngestResponse:
         duration_seconds=duration,
         chunk_count=len(chunks),
         chunks=chunks,
-        course_id=course_id,
-        stored_chunks=stored,
+        
     )
 
 @app.post("/ask", response_model=AskResponse)
