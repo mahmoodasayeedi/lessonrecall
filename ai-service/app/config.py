@@ -12,9 +12,16 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     openai_api_key: str = ""
+    pinecone_api_key: str = ""
+    pinecone_index: str = "lessonrecall"
+    embedding_model: str = "text-embedding-3-small"
+    chat_model: str = "gpt-4o-mini"
     chunk_target_seconds: int = 75
     chunk_overlap_seconds: int = 10
 
+    #Threshold
+    min_relevance_score: float = 0.40
+    
     # Whisper API accepts files up to 25 MB
     max_upload_mb: int = 25
     # Languages we accept from YouTube transcripts, in order of preference

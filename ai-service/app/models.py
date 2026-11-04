@@ -8,6 +8,9 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+course_id: str
+stored_chunks: int
+
 class TranscriptSegment(BaseModel):
     """One short piece of transcript as it comes from YouTube or Whisper (a few seconds)."""
     text: str
@@ -43,6 +46,7 @@ class Chunk(BaseModel):
 class YouTubeIngestRequest(BaseModel):
     url: str = Field(..., examples=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
     language: str | None = Field(default=None, pattern=r"^[a-z]{2}$", examples=["en"])
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])
 
 
 class IngestResponse(BaseModel):
@@ -59,3 +63,24 @@ class IngestResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str    # machine-readable code, e.g. "INVALID_URL"
     message: str  # human-readable message for the user
+
+
+class AskRequest(BaseModel):
+    question: str = Field(..., min_length=3, examples=["What is gradient descent?"])
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])
+    # Optional: only search this one video ("chat with a video" mode)
+    video_id: str | None = Field(default=None, examples=["IHZwWFHWa-w"])
+
+
+class Source(BaseModel):
+    number: int
+    title: str
+    timestamp: str          # "2:05"
+    url: str | None = None  # opens the video at that moment
+    score: float
+
+
+class AskResponse(BaseModel):
+    answer: str
+    covered: bool           # False = the Answer Guard said "not covered"
+    sources: list[Source]

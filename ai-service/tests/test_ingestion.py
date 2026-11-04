@@ -15,6 +15,9 @@ from app.models import Transcript, TranscriptSegment
 
 client = TestClient(main.app)
 
+@pytest.fixture(autouse=True)
+def fake_pinecone(monkeypatch):
+    monkeypatch.setattr(main, "upsert_chunks", lambda chunks, course_id: len(chunks))
 
 def make_segments(total_seconds: int, step: int = 5) -> list[TranscriptSegment]:
     return [TranscriptSegment(text=f"sentence at {t} seconds", start=t, end=t + step) for t in range(0, total_seconds, step)]

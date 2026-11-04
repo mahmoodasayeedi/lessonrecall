@@ -23,6 +23,10 @@ from app.ingestion.errors import IngestionError
 from app.ingestion.validation import ensure_speech, extract_youtube_id, validate_upload
 from app.ingestion.youtube import ingest_youtube
 from app.models import ErrorResponse, IngestResponse, Transcript, YouTubeIngestRequest
+from app.rag.vector_store import upsert_chunks
+from fastapi import FastAPI, File, Form, Request, UploadFile
+from app.rag.answer import answer_question
+from app.models import AskRequest, AskResponse, ErrorResponse, IngestResponse, Transcript, YouTubeIngestRequest
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,17 +48,19 @@ def handle_ingestion_error(_: Request, exc: IngestionError) -> JSONResponse:
 def health() -> dict:
     return {"status": "ok"}
 
-
 @app.post("/ingest/youtube", response_model=IngestResponse, responses=ERROR_RESPONSES)
 def ingest_from_youtube(request: YouTubeIngestRequest) -> IngestResponse:
     """Paste a YouTube link. Uses YouTube's transcript when available, otherwise Whisper."""
     video_id = extract_youtube_id(request.url)
     transcript = ingest_youtube(video_id)
-    return _build_response(transcript)
+    return _build_response(transcript, request.course_id)
 
 
 @app.post("/ingest/upload", response_model=IngestResponse, responses=ERROR_RESPONSES)
-def ingest_from_upload(file: UploadFile = File(...)) -> IngestResponse:
+def ingest_from_upload(
+    file: UploadFile = File(...),
+    course_id: str = Form(default="demo", pattern=r"^[a-z0-9-]{1,64}$"),
+) -> IngestResponse:
     """Upload an MP4 / MP3 (max 25 MB). Transcribed with Whisper."""
     settings = get_settings()
     data = file.file.read()
@@ -74,13 +80,14 @@ def ingest_from_upload(file: UploadFile = File(...)) -> IngestResponse:
         language=language,
         segments=segments,
     )
-    return _build_response(transcript)
+    return _build_response(transcript, course_id)
 
 
-def _build_response(transcript: Transcript) -> IngestResponse:
+def _build_response(transcript: Transcript, course_id: str) -> IngestResponse:
     ensure_speech(transcript.segments)
     settings = get_settings()
     chunks = chunk_transcript(transcript, settings.chunk_target_seconds, settings.chunk_overlap_seconds)
+    stored = upsert_chunks(chunks, course_id)
     duration = int(round(max(s.end for s in transcript.segments)))
     return IngestResponse(
         video_id=transcript.video_id,
@@ -91,4 +98,12 @@ def _build_response(transcript: Transcript) -> IngestResponse:
         duration_seconds=duration,
         chunk_count=len(chunks),
         chunks=chunks,
+        course_id=course_id,
+        stored_chunks=stored,
     )
+
+@app.post("/ask", response_model=AskResponse)
+def ask(request: AskRequest) -> AskResponse:
+    """Ask a question. Answers only from the course videos, with timestamp links."""
+    result = answer_question(request.question, request.course_id, request.video_id)
+    return AskResponse(**result)
