@@ -112,4 +112,4 @@ A fixed demo course with ~30 hand-written questions, measured in LangSmith:
 
 ## Author
 
-Mahmooda Sayeedi. Java developer and technical trainer, now building AI applications.
+Mahmooda Sayeedir. Java developer and technical trainer, now building AI applications.
