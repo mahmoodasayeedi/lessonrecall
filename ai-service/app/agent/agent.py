@@ -1,0 +1,36 @@
+"""The LessonRecall chat agent (LangGraph ReAct agent with tools and memory)."""
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.prebuilt import create_react_agent
+
+from app.agent.tools import get_llm, make_tools
+
+SYSTEM_PROMPT = """You are LessonRecall, a friendly study assistant for one course.
+Rules:
+- Always use a tool to look up course content. Never answer from your own knowledge.
+- If a tool returns NO_RELEVANT_CONTENT, say the course doesn't cover this. Do not guess.
+- - Cite facts by copying the CITE AS text from the tool result exactly. Never write your own times.
+- For follow-ups like "explain that more simply" or "give me an example", build on the
+  previous answer in this conversation; search again if you need more detail.
+- - For quizzes, show only the questions and options. Never include the correct answers or
+  explanations in the same message; reveal them only when the student asks.
+- Answer in the same language as the student's message."""
+
+# Keeps every conversation in memory, by thread_id (lost when the server restarts)
+checkpointer = InMemorySaver()
+
+
+def chat(message: str, thread_id: str, course_id: str, video_id: str | None = None) -> dict:
+    agent = create_react_agent(
+        get_llm(),
+        make_tools(course_id, video_id),
+        prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
+    )
+    config = {"configurable": {"thread_id": thread_id}}
+
+    before = len(agent.get_state(config).values.get("messages", []))
+    result = agent.invoke({"messages": [("user", message)]}, config=config)
+    new_messages = result["messages"][before:]   # only this turn's messages
+
+    tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
+    return {"answer": new_messages[-1].content, "tools_used": tools_used, "thread_id": thread_id}

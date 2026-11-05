@@ -12,7 +12,7 @@ from app.ingestion.chunker import chunk_transcript
 from app.ingestion.errors import InvalidUrlError, NoSpeechError, UnsupportedFileError, FileTooLargeError
 from app.ingestion.validation import ensure_speech, extract_youtube_id, validate_upload
 from app.models import Transcript, TranscriptSegment
-
+from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError
 client = TestClient(main.app)
 
 @pytest.fixture(autouse=True)

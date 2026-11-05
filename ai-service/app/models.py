@@ -33,14 +33,15 @@ class Chunk(BaseModel):
     """A ~75-second piece of transcript. This is what we will embed and store in Pinecone (Day 2)."""
     chunk_index: int
     text: str
-    start_seconds: int
-    end_seconds: int
+    start_seconds: int | None = None # None for PDFs
+    end_seconds: int | None = None   # None for PDFs
     video_id: str
     title: str
-    source_type: Literal["youtube", "upload"]
+    source_type: Literal["youtube", "upload", "pdf"]
     language: str | None = None
     # Link that opens the video at the chunk's start (None for uploaded files)
     timestamp_url: str | None = None
+    page: int | None = None               # PDF page number
 
 
 class YouTubeIngestRequest(BaseModel):
@@ -86,3 +87,40 @@ class AskResponse(BaseModel):
     answer: str
     covered: bool           # False = the Answer Guard said "not covered"
     sources: list[Source]
+
+class PdfIngestResponse(BaseModel):
+    course_id: str
+    document_id: str
+    title: str
+    page_count: int
+    stored_chunks: int
+    
+class SummaryRequest(BaseModel):
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])
+    video_id: str = Field(..., examples=["aircAruvnKk"])
+
+
+class ChapterOut(BaseModel):
+    title: str
+    timestamp: str
+    url: str | None = None
+
+
+class SummaryResponse(BaseModel):
+    video_id: str
+    title: str
+    summary: str
+    key_points: list[str]
+    chapters: list[ChapterOut]
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, examples=["What is gradient descent?"])
+    thread_id: str = Field(..., examples=["student1-chat1"])
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])
+    video_id: str | None = Field(default=None, examples=["IHZwWFHWa-w"])
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    tools_used: list[str]
+    thread_id: str

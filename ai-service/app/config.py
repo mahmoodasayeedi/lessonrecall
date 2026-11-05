@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     chunk_overlap_seconds: int = 10
 
     #Threshold
-    min_relevance_score: float = 0.40
+    min_relevance_score: float = 0.30
     
     # Whisper API accepts files up to 25 MB
     max_upload_mb: int = 25

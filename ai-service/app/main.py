@@ -8,6 +8,8 @@ Java comparison:
 - `@app.post("/ingest/...")`  ~ @PostMapping in a @RestController
 - `@app.exception_handler`    ~ @ExceptionHandler in a @ControllerAdvice
 """
+from dotenv import load_dotenv
+load_dotenv(override=True)
 import hashlib
 import logging
 import tempfile
@@ -15,7 +17,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
-
+from app.agent.agent import chat
 from app.config import get_settings
 from app.ingestion import whisper_transcriber
 from app.ingestion.chunker import chunk_transcript
@@ -26,9 +28,15 @@ from app.models import ErrorResponse, IngestResponse, Transcript, YouTubeIngestR
 from app.rag.vector_store import upsert_chunks
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from app.rag.answer import answer_question
-from app.models import AskRequest, AskResponse, ErrorResponse, IngestResponse, Transcript, YouTubeIngestRequest
-
+from app.models import (
+    AskRequest, AskResponse, ChatRequest, ChatResponse, ErrorResponse, IngestResponse,
+    PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, YouTubeIngestRequest,
+)
+from app.ingestion.pdf import pdf_to_chunks
+from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError
 logging.basicConfig(level=logging.INFO)
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from app.rag.summary import summarize_video
 
 app = FastAPI(
     title="LessonRecall AI Service",
@@ -108,3 +116,36 @@ def ask(request: AskRequest) -> AskResponse:
     """Ask a question. Answers only from the course videos, with timestamp links."""
     result = answer_question(request.question, request.course_id, request.video_id)
     return AskResponse(**result)
+
+
+@app.post("/ingest/pdf", response_model=PdfIngestResponse, responses=ERROR_RESPONSES)
+def ingest_pdf(
+    file: UploadFile = File(...),
+    course_id: str = Form(default="demo", pattern=r"^[a-z0-9-]{1,64}$"),
+) -> PdfIngestResponse:
+    """Upload slides or a PDF. Each page becomes a searchable chunk."""
+    data = file.file.read()
+    if not (file.filename or "").lower().endswith(".pdf"):
+        raise UnsupportedFileError("Please upload a .pdf file.")
+    if len(data) > get_settings().max_upload_mb * 1024 * 1024:
+        raise FileTooLargeError(f"The PDF is larger than {get_settings().max_upload_mb} MB.")
+
+    document_id, title, page_count, chunks = pdf_to_chunks(data, file.filename)
+    stored = upsert_chunks(chunks, course_id)
+    return PdfIngestResponse(
+        course_id=course_id, document_id=document_id, title=title,
+        page_count=page_count, stored_chunks=stored,
+    )
+
+@app.post("/summary", response_model=SummaryResponse)
+def summary(request: SummaryRequest) -> SummaryResponse:
+    """Short summary, key points and chapters with timestamps for one video."""
+    result = summarize_video(request.course_id, request.video_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="No video with this ID in this course.")
+    return SummaryResponse(**result)
+
+@app.post("/chat", response_model=ChatResponse)
+def chat_endpoint(request: ChatRequest) -> ChatResponse:
+    """Chat with the LessonRecall agent. Same thread_id = same conversation (memory)."""
+    return ChatResponse(**chat(request.message, request.thread_id, request.course_id, request.video_id))

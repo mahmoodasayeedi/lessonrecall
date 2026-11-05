@@ -41,3 +41,7 @@ class NoSpeechError(IngestionError):
 class TranscriptionFailedError(IngestionError):
     status_code = 502
     code = "TRANSCRIPTION_FAILED"
+
+class NoTextError(IngestionError):
+    status_code = 422
+    code = "NO_TEXT"

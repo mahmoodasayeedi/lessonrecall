@@ -62,3 +62,18 @@ def search(question: str, course_id: str, video_id: str | None = None, top_k: in
 
     result = get_index().query(**query)
     return [{"score": m.score, **m.metadata} for m in result.matches]
+
+def list_documents(course_id: str) -> list[dict]:
+    """All videos and PDFs in a course: [{"id", "title", "type"}]."""
+    index = get_index()
+    doc_ids = set()
+    for ids in index.list(namespace=course_id):
+        doc_ids.update(i.rsplit("-", 1)[0] for i in ids)   # "IHZwWFHWa-w-3" -> "IHZwWFHWa-w"
+
+    docs = []
+    for doc_id in sorted(doc_ids):
+        found = index.fetch(ids=[f"{doc_id}-0", f"{doc_id}-1"], namespace=course_id).vectors
+        if found:
+            meta = next(iter(found.values())).metadata
+            docs.append({"id": doc_id, "title": meta["title"], "type": meta["source_type"]})
+    return docs

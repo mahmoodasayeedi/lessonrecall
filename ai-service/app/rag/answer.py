@@ -2,6 +2,7 @@
 from app.config import get_settings
 from app.rag.embeddings import get_openai_client
 from app.rag.vector_store import search
+import re
 
 NOT_COVERED = "This isn't covered in the course material, so I can't answer it without guessing."
 
@@ -15,6 +16,11 @@ def format_time(seconds: int) -> str:
     """125 -> '2:05'"""
     return f"{seconds // 60}:{seconds % 60:02d}"
 
+def location(source: dict) -> str:
+    """'page 4' for PDFs, '2:05' for videos."""
+    if source.get("page"):
+        return f"page {int(source['page'])}"
+    return format_time(int(source["start_seconds"]))
 
 def answer_question(question: str, course_id: str, video_id: str | None = None) -> dict:
     settings = get_settings()
@@ -26,7 +32,7 @@ def answer_question(question: str, course_id: str, video_id: str | None = None) 
 
     sources = [m for m in matches if m["score"] >= settings.min_relevance_score]
     context = "\n\n".join(
-        f"[{i}] {s['title']} at {format_time(int(s['start_seconds']))}:\n{s['text']}"
+        f"[{i}] {s['title']} at {location(s)}:\n{s['text']}"
         for i, s in enumerate(sources, start=1)
     )
 
@@ -42,7 +48,7 @@ def answer_question(question: str, course_id: str, video_id: str | None = None) 
 
     if answer == "NOT_COVERED":
         return {"answer": NOT_COVERED, "covered": False, "sources": []}
-
+    cited = {int(n) for n in re.findall(r"\[(\d+)\]", answer)}  
     return {
         "answer": answer,
         "covered": True,
@@ -50,10 +56,13 @@ def answer_question(question: str, course_id: str, video_id: str | None = None) 
             {
                 "number": i,
                 "title": s["title"],
-                "timestamp": format_time(int(s["start_seconds"])),
+                "timestamp": location(s),
                 "url": s.get("timestamp_url"),
                 "score": round(s["score"], 3),
             }
             for i, s in enumerate(sources, start=1)
+            if i in cited
+                
         ],
+    
     }
