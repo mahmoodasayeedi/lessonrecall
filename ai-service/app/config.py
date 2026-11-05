@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Languages we accept from YouTube transcripts, in order of preference
     transcript_languages: list[str] = ["en", "de"]
 
+    webshare_proxy_username: str = ""
+    webshare_proxy_password: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

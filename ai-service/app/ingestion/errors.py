@@ -45,3 +45,7 @@ class TranscriptionFailedError(IngestionError):
 class NoTextError(IngestionError):
     status_code = 422
     code = "NO_TEXT"
+
+class NotFoundError(IngestionError):
+    status_code = 404
+    code = "NOT_FOUND"

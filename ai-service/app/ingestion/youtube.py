@@ -6,7 +6,7 @@ Step 2: if there is none, download the audio with yt-dlp and transcribe it with 
 import logging
 import tempfile
 from pathlib import Path
-
+from youtube_transcript_api.proxies import WebshareProxyConfig
 import requests
 import yt_dlp
 from youtube_transcript_api import (
@@ -28,6 +28,23 @@ log = logging.getLogger(__name__)
 def watch_url(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
+def transcript_api() -> YouTubeTranscriptApi:
+    """Use the residential proxy when configured (deployment), else a direct connection (local)."""
+    s = get_settings()
+    if s.webshare_proxy_username:
+        return YouTubeTranscriptApi(proxy_config=WebshareProxyConfig(
+            proxy_username=s.webshare_proxy_username,
+            proxy_password=s.webshare_proxy_password,
+        ))
+    return YouTubeTranscriptApi()
+
+
+def ytdlp_proxy() -> dict:
+    """The same proxy for yt-dlp (title lookup and audio download)."""
+    s = get_settings()
+    if s.webshare_proxy_username:
+        return {"proxy": f"http://{s.webshare_proxy_username}-rotate:{s.webshare_proxy_password}@p.webshare.io:80"}
+    return {}
 
 def fetch_video_info(video_id: str) -> dict:
     """Get title and duration without downloading. Also tells us if the video exists."""

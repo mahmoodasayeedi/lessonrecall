@@ -33,7 +33,7 @@ from app.models import (
     PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, YouTubeIngestRequest,
 )
 from app.ingestion.pdf import pdf_to_chunks
-from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError
+from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError,NotFoundError
 logging.basicConfig(level=logging.INFO)
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from app.rag.summary import summarize_video
@@ -142,7 +142,7 @@ def summary(request: SummaryRequest) -> SummaryResponse:
     """Short summary, key points and chapters with timestamps for one video."""
     result = summarize_video(request.course_id, request.video_id)
     if result is None:
-        raise HTTPException(status_code=404, detail="No video with this ID in this course.")
+        raise NotFoundError("No video with this ID in this course.")
     return SummaryResponse(**result)
 
 @app.post("/chat", response_model=ChatResponse)

@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: lessonrecall-db
+    environment:
+      POSTGRES_DB: lessonrecall
+      POSTGRES_USER: lessonrecall
+      POSTGRES_PASSWORD: lessonrecall
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
