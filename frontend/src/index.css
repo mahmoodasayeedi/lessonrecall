@@ -1,0 +1,149 @@
+/* LessonRecall theme: Plum & mint */
+:root {
+  --paper: #F7F5FB;
+  /* page background */
+  --card: #FFFFFF;
+  --ink: #2A1B4A;
+  /* text, timestamp chips, active menu */
+  --muted: #5B5070;
+  --line: #E5E0F0;
+  --mint: #0F7A5C;
+  /* grounded answers, primary buttons */
+  --mint-tint: #DFF3EC;
+  --rose: #B4235A;
+  /* weak topics, errors */
+  --rose-tint: #FBE4EC;
+  --soft: #EEEAF5;
+  --player: #1E1433;
+  --serif: Newsreader, Georgia, serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  margin: 0;
+}
+
+a {
+  color: var(--mint);
+}
+
+.page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 40px) 48px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.btn {
+  padding: 11px 18px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #D3CBE3;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.btn-primary {
+  border: none;
+  background: var(--mint);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #D3CBE3;
+  border-radius: 10px;
+  font: inherit;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.error {
+  color: var(--rose);
+  font-size: 14px;
+}
+
+/* The ▶ 2:23 timestamp chip: LessonRecall's visual signature */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chip-outline {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-mint {
+  background: var(--mint-tint);
+  color: var(--mint);
+}
+
+.badge-soft {
+  background: var(--soft);
+  color: var(--muted);
+}
+
+.badge-rose {
+  background: var(--rose-tint);
+  color: var(--rose);
+}
