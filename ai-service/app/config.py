@@ -30,7 +30,8 @@ class Settings(BaseSettings):
     webshare_proxy_username: str = ""
     webshare_proxy_password: str = ""
 
-
+    internal_api_token: str = ""
+    
 @lru_cache
 def get_settings() -> Settings:
     # lru_cache = created once and reused (like a Spring singleton bean)

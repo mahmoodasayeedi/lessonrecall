@@ -49,3 +49,7 @@ class NoTextError(IngestionError):
 class NotFoundError(IngestionError):
     status_code = 404
     code = "NOT_FOUND"
+
+class UnauthorizedError(IngestionError):
+    status_code = 401
+    code = "UNAUTHORIZED"

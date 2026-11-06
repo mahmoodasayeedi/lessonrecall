@@ -14,7 +14,7 @@ import hashlib
 import logging
 import tempfile
 from pathlib import Path
-
+from fastapi import Depends, FastAPI, File, Form, Header, Request, UploadFile
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from app.agent.agent import chat
@@ -33,15 +33,25 @@ from app.models import (
     PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, YouTubeIngestRequest,
 )
 from app.ingestion.pdf import pdf_to_chunks
-from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError,NotFoundError
+from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError,NotFoundError,UnauthorizedError
 logging.basicConfig(level=logging.INFO)
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from app.rag.summary import summarize_video
+
+OPEN_PATHS = {"/health", "/docs", "/openapi.json"}
+
+
+def verify_internal_token(request: Request, x_internal_token: str | None = Header(default=None)) -> None:
+    """Only Spring Boot (which knows the token) may call the AI service."""
+    expected = get_settings().internal_api_token
+    if expected and request.url.path not in OPEN_PATHS and x_internal_token != expected:
+        raise UnauthorizedError("Missing or invalid internal token.")
 
 app = FastAPI(
     title="LessonRecall AI Service",
     version="0.1.0",
     description="Ingestion pipeline: YouTube link or MP4/MP3 -> timestamped transcript chunks.",
+    dependencies=[Depends(verify_internal_token)],
 )
 
 ERROR_RESPONSES = {code: {"model": ErrorResponse} for code in (400, 404, 413, 415, 422, 502)}
