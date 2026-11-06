@@ -58,4 +58,19 @@ public class AiClient {
         form.add("course_id", courseSlug);
         return form;
     }
+    public ChatResponse chat(String message, String threadId, String courseSlug, String videoId) {
+        return rest.post().uri("/chat")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ChatRequest(message, threadId, courseSlug, videoId))
+                .retrieve()
+                .body(ChatResponse.class);
+    }
+
+    public SummaryResponse summary(String courseSlug, String videoId) {
+        return rest.post().uri("/summary")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new SummaryRequest(courseSlug, videoId))
+                .retrieve()
+                .body(SummaryResponse.class);
+    }
 }

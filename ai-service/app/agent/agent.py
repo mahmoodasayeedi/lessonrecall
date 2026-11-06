@@ -1,7 +1,9 @@
 """The LessonRecall chat agent (LangGraph ReAct agent with tools and memory)."""
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
+import re
 
+from app.rag.answer import format_time
 from app.agent.tools import get_llm, make_tools
 
 SYSTEM_PROMPT = """You are LessonRecall, a friendly study assistant for one course.
@@ -18,6 +20,13 @@ Rules:
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
 checkpointer = InMemorySaver()
 
+# Matches "(2:17, https://www.youtube.com/watch?v=ID&t=617s)", optionally with "CITE AS:" in front
+CITATION = re.compile(r"(?:CITE AS:\s*)?\((\d+:\d{2}),\s*(https://www\.youtube\.com/watch\?v=[\w-]+&t=(\d+)s)\)")
+
+def fix_citations(text: str) -> str:
+    """Rebuild every time label from the seconds in its link, so it can never be wrong."""
+    text = CITATION.sub(lambda m: f"({format_time(int(m.group(3)))}, {m.group(2)})", text)
+    return text.replace("CITE AS:", "").strip()
 
 def chat(message: str, thread_id: str, course_id: str, video_id: str | None = None) -> dict:
     agent = create_react_agent(
@@ -33,4 +42,4 @@ def chat(message: str, thread_id: str, course_id: str, video_id: str | None = No
     new_messages = result["messages"][before:]   # only this turn's messages
 
     tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
-    return {"answer": new_messages[-1].content, "tools_used": tools_used, "thread_id": thread_id}
+    return {"answer": fix_citations(new_messages[-1].content), "tools_used": tools_used, "thread_id": thread_id}

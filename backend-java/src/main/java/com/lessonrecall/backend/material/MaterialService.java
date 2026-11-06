@@ -1,12 +1,15 @@
 package com.lessonrecall.backend.material;
 
 import com.lessonrecall.backend.ai.AiClient;
+import com.lessonrecall.backend.ai.AiDtos;
 import com.lessonrecall.backend.course.Course;
 import com.lessonrecall.backend.course.CourseService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -103,5 +106,15 @@ public class MaterialService {
     private MaterialResponse toResponse(Material m) {
         return new MaterialResponse(m.getId(), m.getType(), m.getTitle(), m.getSourceUrl(),
                 m.getStatus(), m.getErrorMessage(), m.getChunkCount(), m.getExternalId());
+    }
+
+    public AiDtos.SummaryResponse summary(Long userId, Long courseId, Long materialId) {
+        Course course = courses.requireAccess(userId, courseId);
+        Material m = materials.findByIdAndCourseId(materialId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+        if (m.getStatus() != MaterialStatus.READY || m.getType() == MaterialType.PDF) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Summaries are available for ready videos only");
+        }
+        return ai.summary(course.getSlug(), m.getExternalId());
     }
 }

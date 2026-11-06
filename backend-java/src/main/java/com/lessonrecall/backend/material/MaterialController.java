@@ -1,5 +1,6 @@
 package com.lessonrecall.backend.material;
 
+import com.lessonrecall.backend.ai.AiDtos;
 import com.lessonrecall.backend.material.MaterialService.MaterialResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -38,5 +39,11 @@ public class MaterialController {
     @GetMapping
     public List<MaterialResponse> list(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId) {
         return service.list(Long.valueOf(jwt.getSubject()), courseId);
+    }
+
+    @GetMapping("/{materialId}/summary")
+    public AiDtos.SummaryResponse summary(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId,
+                                          @PathVariable Long materialId) {
+        return service.summary(Long.valueOf(jwt.getSubject()), courseId, materialId);
     }
 }
