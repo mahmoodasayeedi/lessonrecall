@@ -18,7 +18,8 @@ import java.util.Map;
 public class MaterialService {
 
     public record MaterialResponse(Long id, MaterialType type, String title, String sourceUrl,
-                                   MaterialStatus status, String errorMessage, Integer chunkCount, String externalId) {}
+                                   MaterialStatus status, String errorMessage, Integer chunkCount,
+                                   String externalId, Integer durationSeconds) {}
 
     private final MaterialRepository materials;
     private final CourseService courses;
@@ -30,12 +31,14 @@ public class MaterialService {
         this.ai = ai;
     }
 
+    // ---------- Add materials (owner only) ----------
+
     public MaterialResponse addYoutube(Long userId, Long courseId, String url, String language) {
         Course course = courses.requireOwner(userId, courseId);
         Material m = start(course, MaterialType.YOUTUBE, url, url);
         try {
             var result = ai.ingestYoutube(url, course.getSlug(), language);
-            return finish(m, result.videoId(), result.title(), result.storedChunks());
+            return finish(m, result.videoId(), result.title(), result.storedChunks(), result.durationSeconds());
         } catch (RuntimeException e) {
             return fail(m, e);
         }
@@ -49,21 +52,33 @@ public class MaterialService {
         try {
             if (isPdf) {
                 var result = ai.ingestPdf(file, course.getSlug());
-                return finish(m, result.documentId(), result.title(), result.storedChunks());
+                return finish(m, result.documentId(), result.title(), result.storedChunks(), null);
             }
             var result = ai.ingestUpload(file, course.getSlug());
-            return finish(m, result.videoId(), result.title(), result.storedChunks());
+            return finish(m, result.videoId(), result.title(), result.storedChunks(), result.durationSeconds());
         } catch (RuntimeException e) {
             return fail(m, e);
         }
     }
 
+    // ---------- Read (owner or enrolled) ----------
+
     public List<MaterialResponse> list(Long userId, Long courseId) {
-        courses.requireAccess(userId, courseId);   // owner or enrolled may see the list
+        courses.requireAccess(userId, courseId);
         return materials.findByCourseIdOrderByCreatedAtAsc(courseId).stream().map(this::toResponse).toList();
     }
 
-    // --- helpers ---
+    public AiDtos.SummaryResponse summary(Long userId, Long courseId, Long materialId) {
+        Course course = courses.requireAccess(userId, courseId);
+        Material m = materials.findByIdAndCourseId(materialId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+        if (m.getStatus() != MaterialStatus.READY || m.getType() == MaterialType.PDF) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Summaries are available for ready videos only");
+        }
+        return ai.summary(course.getSlug(), m.getExternalId());
+    }
+
+    // ---------- Helpers ----------
 
     private Material start(Course course, MaterialType type, String title, String sourceUrl) {
         Material m = new Material();
@@ -75,17 +90,18 @@ public class MaterialService {
         return materials.save(m);   // saved first, so the row exists even if the AI call fails
     }
 
-    private MaterialResponse finish(Material m, String externalId, String title, int chunks) {
+    private MaterialResponse finish(Material m, String externalId, String title, int chunks, Integer duration) {
         m.setExternalId(externalId);
         m.setTitle(title);
         m.setChunkCount(chunks);
+        m.setDurationSeconds(duration);
         m.setStatus(MaterialStatus.READY);
         return toResponse(materials.save(m));
     }
 
     private MaterialResponse fail(Material m, RuntimeException e) {
-        m.setStatus(MaterialStatus.FAILED);
         String msg = errorMessage(e);
+        m.setStatus(MaterialStatus.FAILED);
         m.setErrorMessage(msg.length() > 1000 ? msg.substring(0, 1000) : msg);
         return toResponse(materials.save(m));
     }
@@ -105,16 +121,6 @@ public class MaterialService {
 
     private MaterialResponse toResponse(Material m) {
         return new MaterialResponse(m.getId(), m.getType(), m.getTitle(), m.getSourceUrl(),
-                m.getStatus(), m.getErrorMessage(), m.getChunkCount(), m.getExternalId());
-    }
-
-    public AiDtos.SummaryResponse summary(Long userId, Long courseId, Long materialId) {
-        Course course = courses.requireAccess(userId, courseId);
-        Material m = materials.findByIdAndCourseId(materialId, courseId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
-        if (m.getStatus() != MaterialStatus.READY || m.getType() == MaterialType.PDF) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Summaries are available for ready videos only");
-        }
-        return ai.summary(course.getSlug(), m.getExternalId());
+                m.getStatus(), m.getErrorMessage(), m.getChunkCount(), m.getExternalId(), m.getDurationSeconds());
     }
 }

@@ -87,4 +87,7 @@ def make_tools(course_id: str, video_id: str | None = None) -> list:
         )
         return plan.model_dump_json()
 
+    if video_id:
+        # "This video" scope: the agent can only search the current video
+        return [video_search, quiz_generator, study_planner]
     return [video_search, course_search, quiz_generator, study_planner]

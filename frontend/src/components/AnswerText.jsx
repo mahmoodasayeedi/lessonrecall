@@ -1,5 +1,5 @@
 // Finds "(10:17, https://www.youtube.com/watch?v=ID&t=617s)" and "(page 6)" in the answer
-const CITATION = /\((\d+:\d{2}(?::\d{2})?),\s*https:\/\/www\.youtube\.com\/watch\?v=([\w-]+)&t=(\d+)s\)|\(page (\d+)\)/g
+const CITATION = /\(\s*(?:CITE AS:\s*)?(\d+:\d{2}(?::\d{2})?),\s*https:\/\/www\.youtube\.com\/watch\?v=([\w-]+)&t=(\d+)s\s*\)|\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)/g
 
 export function analyse(text) {
   const videos = new Set(), pages = new Set()
@@ -14,6 +14,10 @@ export function analyse(text) {
 // **bold** → <b>
 function withBold(text, keyPrefix) {
   return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <b key={`${keyPrefix}-${i}`}>{part}</b> : part))
+}
+// All video moments cited in a text: [{ videoId, seconds }]
+export function citedMoments(text) {
+  return [...text.matchAll(CITATION)].filter((m) => m[2]).map((m) => ({ videoId: m[2], seconds: Number(m[3]) }))
 }
 
 export default function AnswerText({  text: raw, onPlay}) {

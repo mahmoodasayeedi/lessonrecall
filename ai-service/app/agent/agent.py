@@ -23,12 +23,16 @@ Rules:
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
 checkpointer = InMemorySaver()
 
-# Matches "(2:17, https://www.youtube.com/watch?v=ID&t=617s)", optionally with "CITE AS:" in front
-CITATION = re.compile(r"(?:CITE AS:\s*)?\((\d+:\d{2}),\s*(https://www\.youtube\.com/watch\?v=[\w-]+&t=(\d+)s)\)")
+# "(9:16, URL)", "( 9:16, URL)", "(CITE AS: 9:16, URL)" or "CITE AS: (9:16, URL)" → "(9:16, URL)"
+CITATION = re.compile(
+    r"(?:CITE AS:\s*)?\(\s*(?:CITE AS:\s*)?(\d+:\d{2}),\s*(https://www\.youtube\.com/watch\?v=[\w-]+&t=(\d+)s)\s*\)")
+PAGE = re.compile(r"(?:CITE AS:\s*)?\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)")
+
 
 def fix_citations(text: str) -> str:
-    """Rebuild every time label from the seconds in its link, so it can never be wrong."""
+    """Rebuild every time label from the seconds in its link, and normalise page citations."""
     text = CITATION.sub(lambda m: f"({format_time(int(m.group(3)))}, {m.group(2)})", text)
+    text = PAGE.sub(lambda m: f"(page {m.group(1)})", text)
     return text.replace("CITE AS:", "").strip()
 
 def chat(message: str, thread_id: str, course_id: str, video_id: str | None = None) -> dict:

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import AnswerText, { analyse } from './AnswerText'
 
-export default function ChatPanel({ courseId, videoId, onPlay }) {
+export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange }) {
   const [sessionId, setSessionId] = useState(null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -54,7 +54,11 @@ export default function ChatPanel({ courseId, videoId, onPlay }) {
       setBusy(false)
     }
   }
-
+  // Tell the course page about the messages (for the Recall timeline pins)   ← NEW
+  useEffect(() => {
+    onMessagesChange?.(messages)
+  }, [messages, onMessagesChange])
+  
   async function newChat() {
     const s = await api(`/courses/${courseId}/chats`, { method: 'POST' })
     setSessionId(s.id)

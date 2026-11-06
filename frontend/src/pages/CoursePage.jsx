@@ -5,6 +5,8 @@ import Header from '../components/Header'
 import YouTubePlayer from '../components/YouTubePlayer'
 import AddMaterialForm from '../components/AddMaterialForm'
 import ChatPanel from '../components/ChatPanel'
+import RecallTimeline from '../components/RecallTimeline'
+import { citedMoments } from '../components/AnswerText'
 
 const statusBadge = {
   READY: <span className="badge badge-mint">Ready</span>,
@@ -19,6 +21,9 @@ export default function CoursePage() {
   const [selected, setSelected] = useState(null)             // the material shown in the player
   const [seek, setSeek] = useState({ start: 0, key: 0 })     // where the player should start
   const [error, setError] = useState('')
+  const [chatMessages, setChatMessages] = useState([])
+  const [chapters, setChapters] = useState({})          // cache: materialId → chapters
+  const [loadingChapters, setLoadingChapters] = useState(false)
 
   const loadMaterials = useCallback(() => {
     api(`/courses/${id}/materials`).then((list) => {
@@ -31,6 +36,14 @@ export default function CoursePage() {
     api(`/courses/${id}`).then(setCourse).catch((e) => setError(e.message))
     loadMaterials()
   }, [id, loadMaterials])
+    useEffect(() => {
+    if (!selected || selected.type !== 'YOUTUBE' || chapters[selected.id]) return
+    setLoadingChapters(true)
+    api(`/courses/${id}/materials/${selected.id}/summary`)
+      .then((s) => setChapters((c) => ({ ...c, [selected.id]: s.chapters })))
+      .catch(() => setChapters((c) => ({ ...c, [selected.id]: [] })))
+      .finally(() => setLoadingChapters(false))
+  }, [id, selected, chapters])
 
   // The chat (Step 6) calls this: jump to a moment in a video
   function playAt(seconds, videoId) {
@@ -43,7 +56,13 @@ export default function CoursePage() {
   if (!course) return <div className="page"><Header /><p className="muted" style={{ paddingTop: 24 }}>Loading…</p></div>
 
   const isOwner = course.myRelation === 'OWNER'
-
+    const pins = [...new Set(
+    chatMessages.filter((m) => m.role === 'assistant')
+      .flatMap((m) => citedMoments(m.content))
+      .filter((c) => c.videoId === selected?.externalId)
+      .map((c) => c.seconds)
+  )]
+    console.log('chat messages:', chatMessages.length, 'pins:', pins, 'video:', selected?.externalId)
   return (
     <div className="page">
       <Header />
@@ -59,6 +78,15 @@ export default function CoursePage() {
           <YouTubePlayer
             videoId={selected?.type === 'YOUTUBE' ? selected.externalId : null}
             start={seek.start} seekKey={seek.key} title={selected?.title} />
+
+            <RecallTimeline
+            duration={selected?.durationSeconds}
+            chapters={chapters[selected?.id] || []}
+            pins={pins}
+            current={seek.start}
+            loading={loadingChapters}
+            onSeek={(s) => playAt(s, selected.externalId)} />
+            
 
           <div className="card">
             <h2 style={{ fontSize: 20, marginBottom: 6 }}>Course materials</h2>
@@ -93,7 +121,7 @@ export default function CoursePage() {
         </div>
 
         <aside style={{ flex: '1 1 400px', minWidth: 0 }}>
-          <ChatPanel courseId={id} videoId={selected?.externalId} onPlay={playAt} />
+                    <ChatPanel courseId={id} videoId={selected?.externalId} onPlay={playAt} onMessagesChange={setChatMessages} />
         </aside>
       </div>
     </div>

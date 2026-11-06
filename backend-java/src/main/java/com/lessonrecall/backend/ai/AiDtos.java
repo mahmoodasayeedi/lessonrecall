@@ -19,15 +19,17 @@ public final class AiDtos {
                                        @JsonProperty("course_id") String courseId,
                                        String language) {}
 
-    @JsonIgnoreProperties(ignoreUnknown = true)   // we don't need the chunks list in Java
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record IngestResponse(@JsonProperty("video_id") String videoId,
                                  String title,
-                                 @JsonProperty("stored_chunks") int storedChunks) {}
+                                 @JsonProperty("stored_chunks") int storedChunks,
+                                 @JsonProperty("duration_seconds") Integer durationSeconds) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PdfIngestResponse(@JsonProperty("document_id") String documentId,
                                     String title,
-                                    @JsonProperty("stored_chunks") int storedChunks) {}
+                                    @JsonProperty("stored_chunks") int storedChunks,
+                                    @JsonProperty("duration_seconds") Integer durationSeconds){}
 
 
     public record ChatRequest(String message,

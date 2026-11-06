@@ -42,4 +42,5 @@ public class Material {
 
     @CreationTimestamp
     private Instant createdAt;
+    private Integer durationSeconds;     // null for PDFs
 }
