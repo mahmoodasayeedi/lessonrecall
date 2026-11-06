@@ -15,7 +15,10 @@ Rules:
   previous answer in this conversation; search again if you need more detail.
 - - For quizzes, show only the questions and options. Never include the correct answers or
   explanations in the same message; reveal them only when the student asks.
+- When several sources support the answer (for example a video minute and a PDF page),
+  cite each of them, up to 3, so the student can see where they agree.
 - Answer in the same language as the student's message."""
+
 
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
 checkpointer = InMemorySaver()

@@ -4,6 +4,7 @@ import { api } from '../api'
 import Header from '../components/Header'
 import YouTubePlayer from '../components/YouTubePlayer'
 import AddMaterialForm from '../components/AddMaterialForm'
+import ChatPanel from '../components/ChatPanel'
 
 const statusBadge = {
   READY: <span className="badge badge-mint">Ready</span>,
@@ -91,11 +92,8 @@ export default function CoursePage() {
           {isOwner && <AddMaterialForm courseId={id} onAdded={loadMaterials} />}
         </div>
 
-        <aside className="card" style={{ flex: '1 1 400px', minWidth: 0 }}>
-          <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
-          <p className="muted">The chat with answer cards comes in Step 6.</p>
-          <button className="chip" onClick={() => playAt(143, selected?.externalId)}>▶ 2:23</button>
-          <span className="muted" style={{ fontSize: 13 }}> ← try it: jumps the player to 2:23</span>
+        <aside style={{ flex: '1 1 400px', minWidth: 0 }}>
+          <ChatPanel courseId={id} videoId={selected?.externalId} onPlay={playAt} />
         </aside>
       </div>
     </div>
