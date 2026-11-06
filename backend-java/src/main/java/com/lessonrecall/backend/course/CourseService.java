@@ -98,6 +98,15 @@ public class CourseService {
         }
         return course;
     }
+    /** Only the owner may change a course (add or delete materials). */
+    @Transactional(readOnly = true)
+    public Course requireOwner(Long userId, Long courseId) {
+        Course course = requireAccess(userId, courseId);   // 404 if no access at all
+        if (!course.getOwner().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the course owner can change materials");
+        }
+        return course;
+    }
 
     private Course find(Long courseId) {
         return courses.findById(courseId)
