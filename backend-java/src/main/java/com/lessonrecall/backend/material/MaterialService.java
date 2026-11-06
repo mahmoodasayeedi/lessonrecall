@@ -77,7 +77,15 @@ public class MaterialService {
         }
         return ai.summary(course.getSlug(), m.getExternalId());
     }
-
+    public AiDtos.TranscriptResponse transcript(Long userId, Long courseId, Long materialId) {
+        Course course = courses.requireAccess(userId, courseId);
+        Material m = materials.findByIdAndCourseId(materialId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+        if (m.getStatus() != MaterialStatus.READY || m.getType() == MaterialType.PDF) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transcripts are available for ready videos only");
+        }
+        return ai.transcript(course.getSlug(), m.getExternalId());
+    }
     // ---------- Helpers ----------
 
     private Material start(Course course, MaterialType type, String title, String sourceUrl) {

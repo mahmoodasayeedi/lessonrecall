@@ -17,7 +17,8 @@ public class ChatService {
 
     public record SessionResponse(Long id, String title, Instant createdAt) {}
     public record MessageResponse(Long id, String role, String content, Instant createdAt) {}
-    public record ChatReply(MessageResponse userMessage, MessageResponse assistantMessage, List<String> toolsUsed) {}
+    public record ChatReply(MessageResponse userMessage, MessageResponse assistantMessage,
+                            List<String> toolsUsed, List<String> suggestions) {}
 
     private final ChatSessionRepository sessions;
     private final ChatMessageRepository messages;
@@ -63,7 +64,8 @@ public class ChatService {
             s.setTitle(text.length() > 60 ? text.substring(0, 60) + "…" : text);
             sessions.save(s);
         }
-        return new ChatReply(toResponse(userMsg), toResponse(botMsg), result.toolsUsed());
+        return new ChatReply(toResponse(userMsg), toResponse(botMsg), result.toolsUsed(),
+                result.suggestions() == null ? List.of() : result.suggestions());
     }
 
     public List<MessageResponse> history(Long userId, Long sessionId) {

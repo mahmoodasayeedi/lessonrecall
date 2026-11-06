@@ -10,7 +10,7 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const endRef = useRef(null)
-
+  const [suggestions, setSuggestions] = useState([])
     // Continue the newest chat of this course, if there is one
   useEffect(() => {
     async function loadLatestChat() {
@@ -34,6 +34,7 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   async function send(text) {
     if (!text.trim() || busy) return
     setError('')
+    setSuggestions([])
     setBusy(true)
     setInput('')
     setMessages((m) => [...m, { id: `tmp-${Date.now()}`, role: 'user', content: text }])   // show it immediately
@@ -48,6 +49,7 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
         body: { message: text, videoId: scope === 'video' ? videoId : null },
       })
       setMessages((m) => [...m.slice(0, -1), reply.userMessage, { ...reply.assistantMessage, toolsUsed: reply.toolsUsed }])
+      setSuggestions(reply.suggestions || [])
     } catch (err) {
       setError(err.message)
     } finally {
@@ -73,7 +75,7 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   )
 
   return (
-    <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 , height: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -85,7 +87,7 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 560, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {messages.length === 0 && <p className="muted" style={{ margin: 0 }}>Ask anything about this course. Every answer links to the exact minute.</p>}
         {messages.map((m) => m.role === 'user' ? (
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
@@ -100,6 +102,19 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
       {error && <div className="error" role="alert">{error}</div>}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {suggestions.length > 0 && !busy && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="muted" style={{ fontSize: 12, fontWeight: 600 }}>Ask next</div>
+          {suggestions.map((q) => (
+            <button key={q} onClick={() => send(q)}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '11px 14px',
+                       borderRadius: 12, border: '1px solid var(--line)', background: 'var(--card)', font: 'inherit',
+                       fontSize: 15, color: 'var(--ink)', cursor: 'pointer' }}>
+              <span style={{ color: 'var(--mint)', fontWeight: 600 }}>→</span>{q}
+            </button>
+          ))}
+        </div>
+      )}
         {['Explain that more simply', 'Give me an example', 'Quiz me on this'].map((q) => (
           <button key={q} className="btn" style={{ padding: '8px 12px', fontSize: 13, fontWeight: 400, borderRadius: 999 }}
                   disabled={busy || messages.length === 0} onClick={() => send(q)}>{q}</button>

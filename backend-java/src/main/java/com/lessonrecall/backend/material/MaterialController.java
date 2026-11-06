@@ -46,4 +46,9 @@ public class MaterialController {
                                           @PathVariable Long materialId) {
         return service.summary(Long.valueOf(jwt.getSubject()), courseId, materialId);
     }
+    @GetMapping("/{materialId}/transcript")
+    public AiDtos.TranscriptResponse transcript(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId,
+                                                @PathVariable Long materialId) {
+        return service.transcript(Long.valueOf(jwt.getSubject()), courseId, materialId);
+    }
 }

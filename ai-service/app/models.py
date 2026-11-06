@@ -124,3 +124,19 @@ class ChatResponse(BaseModel):
     answer: str
     tools_used: list[str]
     thread_id: str
+    suggestions: list[str] = []
+
+class TranscriptRequest(BaseModel):
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$")
+    video_id: str
+
+
+class TranscriptSection(BaseModel):
+    start_seconds: int
+    end_seconds: int
+    text: str
+
+
+class TranscriptResponse(BaseModel):
+    video_id: str
+    sections: list[TranscriptSection]

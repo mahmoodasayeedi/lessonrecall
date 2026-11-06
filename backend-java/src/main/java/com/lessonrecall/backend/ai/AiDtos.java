@@ -37,9 +37,22 @@ public final class AiDtos {
                               @JsonProperty("course_id") String courseId,
                               @JsonProperty("video_id") String videoId) {}
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChatResponse(String answer,
                                @JsonProperty("tools_used") List<String> toolsUsed,
-                               @JsonProperty("thread_id") String threadId) {}
+                               @JsonProperty("thread_id") String threadId,
+                               List<String> suggestions) {}
+
+    public record TranscriptRequest(@JsonProperty("course_id") String courseId,
+                                    @JsonProperty("video_id") String videoId) {}
+
+    public record TranscriptSection(@JsonProperty("start_seconds") int startSeconds,
+                                    @JsonProperty("end_seconds") int endSeconds,
+                                    String text) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TranscriptResponse(@JsonProperty("video_id") String videoId,
+                                     List<TranscriptSection> sections) {}
 
     public record SummaryRequest(@JsonProperty("course_id") String courseId,
                                  @JsonProperty("video_id") String videoId) {}

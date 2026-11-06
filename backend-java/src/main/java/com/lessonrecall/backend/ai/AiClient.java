@@ -73,4 +73,11 @@ public class AiClient {
                 .retrieve()
                 .body(SummaryResponse.class);
     }
+    public TranscriptResponse transcript(String courseSlug, String videoId) {
+        return rest.post().uri("/transcript")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new TranscriptRequest(courseSlug, videoId))
+                .retrieve()
+                .body(TranscriptResponse.class);
+    }
 }

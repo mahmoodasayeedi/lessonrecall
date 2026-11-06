@@ -2,7 +2,7 @@
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 import re
-
+from pydantic import BaseModel, Field
 from app.rag.answer import format_time
 from app.agent.tools import get_llm, make_tools
 
@@ -46,7 +46,30 @@ def chat(message: str, thread_id: str, course_id: str, video_id: str | None = No
 
     before = len(agent.get_state(config).values.get("messages", []))
     result = agent.invoke({"messages": [("user", message)]}, config=config)
-    new_messages = result["messages"][before:]   # only this turn's messages
+    new_messages = result["messages"][before:]
 
     tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
-    return {"answer": fix_citations(new_messages[-1].content), "tools_used": tools_used, "thread_id": thread_id}
+
+    answer = fix_citations(new_messages[-1].content)
+    return {
+        "answer": answer,
+        "tools_used": tools_used,
+        "thread_id": thread_id,
+        "suggestions": suggest_followups(message, answer),
+    }
+class FollowUps(BaseModel):
+    questions: list[str] = Field(description="Exactly 3 short follow-up questions, max 12 words each")
+
+
+def suggest_followups(question: str, answer: str) -> list[str]:
+    """3 questions the student could ask next. Never breaks the chat if it fails."""
+    if "not cover" in answer.lower():
+        return []
+    try:
+        result = get_llm().with_structured_output(FollowUps).invoke(
+            f"A student asked: {question}\nThe tutor answered: {answer}\n"
+            "Suggest 3 short follow-up questions the student could ask next about the same lesson."
+        )
+        return result.questions[:3]
+    except Exception:
+        return []

@@ -30,13 +30,15 @@ from fastapi import FastAPI, File, Form, Request, UploadFile
 from app.rag.answer import answer_question
 from app.models import (
     AskRequest, AskResponse, ChatRequest, ChatResponse, ErrorResponse, IngestResponse,
-    PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, YouTubeIngestRequest,
+    PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, TranscriptRequest,
+    TranscriptResponse, YouTubeIngestRequest,
 )
 from app.ingestion.pdf import pdf_to_chunks
 from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError,NotFoundError,UnauthorizedError
 logging.basicConfig(level=logging.INFO)
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from app.rag.summary import summarize_video
+from app.rag.summary import load_video_chunks
 
 OPEN_PATHS = {"/health", "/docs", "/openapi.json"}
 
@@ -159,3 +161,15 @@ def summary(request: SummaryRequest) -> SummaryResponse:
 def chat_endpoint(request: ChatRequest) -> ChatResponse:
     """Chat with the LessonRecall agent. Same thread_id = same conversation (memory)."""
     return ChatResponse(**chat(request.message, request.thread_id, request.course_id, request.video_id))
+
+@app.post("/transcript", response_model=TranscriptResponse)
+def transcript(request: TranscriptRequest) -> TranscriptResponse:
+    """The video's transcript as timestamped sections (the stored chunks, in order)."""
+    chunks = load_video_chunks(request.course_id, request.video_id)
+    if not chunks or chunks[0].get("source_type") == "pdf":
+        raise NotFoundError("No video with this ID in this course.")
+    return TranscriptResponse(
+        video_id=request.video_id,
+        sections=[{"start_seconds": int(c["start_seconds"]), "end_seconds": int(c["end_seconds"]), "text": c["text"]}
+                  for c in chunks],
+    )
