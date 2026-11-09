@@ -6,6 +6,7 @@ import CatalogPage from './pages/CatalogPage'
 import CoursePage from './pages/CoursePage'
 import RequireAuth from './auth/RequireAuth'
 import SettingsPage from './pages/SettingsPage'
+import Toaster from './components/Toaster'
 
 function Placeholder({ title }) {
   return (
@@ -18,6 +19,7 @@ function Placeholder({ title }) {
 
 export default function App() {
   return (
+    <>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<Navigate to="/home" replace />} />
@@ -27,5 +29,7 @@ export default function App() {
       <Route path="*" element={<Placeholder title="Page not found" />} />
       <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
     </Routes>
+    <Toaster />
+    </>
   )
 }

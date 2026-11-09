@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'          // use the same import as your other components
-
+import { toast } from './toast'
 export default function CourseActions({ course, isOwner, onChanged }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(course.title)
@@ -16,7 +16,8 @@ export default function CourseActions({ course, isOwner, onChanged }) {
       await api(`/courses/${course.id}`, { method: 'PUT', body: { title, description } })
       setEditing(false)
       onChanged()
-    } catch (err) { setError(err.message) }
+      toast('Course updated')
+    } catch (err) { toast(err.message, 'error') }
   }
 
   async function remove(e) {
@@ -25,7 +26,8 @@ export default function CourseActions({ course, isOwner, onChanged }) {
     try {
       await api(`/courses/${course.id}`, { method: 'DELETE' })
       onChanged()
-    } catch (err) { setError(err.message) }
+      toast('Course deleted')
+    } catch (err) { toast(err.message, 'error') }
   }
 
   async function leave(e) {
@@ -34,7 +36,8 @@ export default function CourseActions({ course, isOwner, onChanged }) {
     try {
       await api(`/courses/${course.id}/enrollment`, { method: 'DELETE' })
       onChanged()
-    } catch (err) { setError(err.message) }
+      toast('You left the course')
+    } catch (err) { toast(err.message, 'error') }
   }
 
   if (editing) {
@@ -52,17 +55,21 @@ export default function CourseActions({ course, isOwner, onChanged }) {
     )
   }
 
+   const iconBtn = { width: 34, height: 34, padding: 0, borderRadius: 10, fontSize: 15,
+                    display: 'inline-grid', placeItems: 'center' }
+
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
       {isOwner ? (
         <>
-          <button className="btn" onClick={(e) => { stop(e); setEditing(true) }}>Edit</button>
-          <button className="btn" style={{ color: 'var(--rose)' }} onClick={remove}>Delete</button>
+          <button className="btn" style={iconBtn} title="Edit course" aria-label="Edit course"
+                  onClick={(e) => { stop(e); setEditing(true) }}>✎</button>
+          <button className="btn" style={{ ...iconBtn, color: 'var(--rose)' }} title="Delete course"
+                  aria-label="Delete course" onClick={remove}>🗑</button>
         </>
       ) : (
-        <button className="btn" onClick={leave}>Leave</button>
+        <button className="btn" style={{ padding: '6px 12px', fontSize: 13 }} onClick={leave}>Leave course</button>
       )}
-      {error && <p className="error">{error}</p>}
     </div>
   )
 }

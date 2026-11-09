@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../api'
+import DropZone from './DropZone'
 
 export default function AddMaterialForm({ courseId, onAdded }) {
   const [url, setUrl] = useState('')
@@ -59,8 +60,7 @@ const [language, setLanguage] = useState('')
 
       <form onSubmit={upload} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <label className="label" htmlFor="file" style={{ width: '100%', marginBottom: 0 }}>Or upload MP4, MP3 or PDF (max 25 MB)</label>
-        <input id="file" type="file" accept=".mp4,.mp3,.m4a,.wav,.pdf" style={{ flex: '1 1 260px' }}
-               onChange={(e) => setFile(e.target.files[0] || null)} disabled={busy} />
+  <DropZone file={file} onFile={setFile} accept=".mp4,.mp3,.m4a,.wav,.pdf" disabled={busy} />
         <button className="btn" disabled={busy || !file}>Upload</button>
       </form>
 

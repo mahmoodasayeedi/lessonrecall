@@ -11,6 +11,7 @@ import TranscriptPanel from '../components/TranscriptPanel'
 import QuizPanel from '../components/QuizPanel'
 import FlashcardsPanel from '../components/FlashcardsPanel'
 import AddMaterialForm from '../components/AddMaterialForm'
+import { toast } from '../components/toast'
 
 const toSeconds = (t) => t.split(':').reduce((acc, p) => acc * 60 + Number(p), 0)
 
@@ -97,9 +98,10 @@ export default function CoursePage() {
     setSelected(null)                                       // stop showing the deleted video
     setSeek({ start: 0, key: 0 })
     setWeakTopics(await api(`/courses/${id}/weak-topics`))  // remove its rose zones
-    loadMaterials()                                         // picks the next video, or none
+    loadMaterials()
+    toast('Material deleted')                                       // picks the next video, or none
   } catch (e) {
-    alert(e.message)
+   toast(e.message, 'error')
   }
 }
   function selectMaterial(m) {
