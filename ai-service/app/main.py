@@ -162,7 +162,8 @@ def summary(request: SummaryRequest) -> SummaryResponse:
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest) -> ChatResponse:
     """Chat with the LessonRecall agent. Same thread_id = same conversation (memory)."""
-    return ChatResponse(**chat(request.message, request.thread_id, request.course_id, request.video_id))
+    return ChatResponse(**chat(request.message, request.thread_id, request.course_id,
+                               request.video_id, language=request.language))
 
 @app.post("/transcript", response_model=TranscriptResponse)
 def transcript(request: TranscriptRequest) -> TranscriptResponse:

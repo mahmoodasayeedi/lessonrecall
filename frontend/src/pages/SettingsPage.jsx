@@ -1,6 +1,7 @@
-import { useState } from 'react'
+
 import { api } from '../api'
 import Header from '../components/Header'
+import { useEffect, useState } from 'react'
 
 export default function SettingsPage() {
   const [current, setCurrent] = useState('')
@@ -8,6 +9,20 @@ export default function SettingsPage() {
   const [repeat, setRepeat] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+const LANGUAGES = ['', 'English', 'German', 'Spanish', 'French', 'Arabic', 'Urdu', 'Hindi']
+const [language, setLanguage] = useState('')
+const [langMessage, setLangMessage] = useState('')
+
+useEffect(() => {
+  api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
+}, [])
+
+async function saveLanguage(e) {
+  e.preventDefault()
+  await api('/auth/language', { method: 'PUT', body: { language } })
+  setLangMessage('Saved. New answers will use this language.')
+}
 
   async function submit(e) {
     e.preventDefault()
@@ -40,6 +55,16 @@ export default function SettingsPage() {
           {message && <p style={{ color: 'var(--mint)' }}>{message}</p>}
           {error && <p className="error">{error}</p>}
         </form>
+        <form className="card" onSubmit={saveLanguage} style={{ maxWidth: 420, display: 'grid', gap: 12, marginTop: 16 }}>
+  <h2 style={{ fontSize: 20 }}>Answer language</h2>
+  <label className="label">Answer me in
+    <select className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
+      {LANGUAGES.map((l) => <option key={l} value={l}>{l || 'Same language as my question'}</option>)}
+    </select>
+  </label>
+  <button className="btn btn-primary">Save language</button>
+  {langMessage && <p style={{ color: 'var(--mint)' }}>{langMessage}</p>}
+</form>
       </div>
     </>
   )

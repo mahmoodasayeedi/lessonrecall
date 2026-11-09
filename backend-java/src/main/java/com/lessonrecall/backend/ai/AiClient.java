@@ -60,10 +60,10 @@ public class AiClient {
         form.add("course_id", courseSlug);
         return form;
     }
-    public ChatResponse chat(String message, String threadId, String courseSlug, String videoId) {
+    public ChatResponse chat(String message, String threadId, String slug, String videoId, String language) {
         return rest.post().uri("/chat")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new ChatRequest(message, threadId, courseSlug, videoId))
+                .body(new ChatRequest(message, threadId, slug, videoId, language))
                 .retrieve()
                 .body(ChatResponse.class);
     }

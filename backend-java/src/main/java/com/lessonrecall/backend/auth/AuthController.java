@@ -80,4 +80,20 @@ public class AuthController {
         users.save(user);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/language")
+    public LanguageResponse getLanguage(@AuthenticationPrincipal Jwt jwt) {
+        User user = users.findById(Long.parseLong(jwt.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        return new LanguageResponse(user.getAnswerLanguage());
+    }
+
+    @PutMapping("/language")
+    public LanguageResponse setLanguage(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody LanguageRequest req) {
+        User user = users.findById(Long.parseLong(jwt.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        String lang = (req.language() == null || req.language().isBlank()) ? null : req.language();
+        user.setAnswerLanguage(lang);
+        users.save(user);
+        return new LanguageResponse(lang);
+    }
 }

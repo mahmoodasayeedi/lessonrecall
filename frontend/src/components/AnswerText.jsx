@@ -2,13 +2,20 @@
 const CITATION = /\(\s*(?:CITE AS:\s*)?(\d+:\d{2}(?::\d{2})?),\s*https:\/\/www\.youtube\.com\/watch\?v=([\w-]+)&t=(\d+)s\s*\)|\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)/g
 
 export function analyse(text) {
-  const videos = new Set(), pages = new Set()
+  const videoMoments = new Set()
+  const pdfPages = new Set()
   for (const m of text.matchAll(CITATION)) {
-    if (m[2]) videos.add(`${m[2]}-${m[3]}`)
-    else pages.add(m[4])
+    if (m[2]) videoMoments.add(`${m[2]}-${m[3]}`)   // videoId + seconds
+    else if (m[4]) pdfPages.add(m[4])              // page number
   }
-  const notCovered = videos.size + pages.size === 0 && /(not cover|doesn't cover|does not cover|not covered)/i.test(text)
-  return { sources: videos.size + pages.size, hasVideo: videos.size > 0, hasPdf: pages.size > 0, notCovered }
+  const sources = videoMoments.size + pdfPages.size
+  return {
+    sources,
+    hasVideo: videoMoments.size > 0,
+    hasPdf: pdfPages.size > 0,
+    // works in every language: no citation and just one short sentence = "not covered"
+    notCovered: sources === 0 && text.trim().length < 160,
+  }
 }
 
 // **bold** → <b>

@@ -114,6 +114,7 @@ class SummaryResponse(BaseModel):
     chapters: list[ChapterOut]
 
 class ChatRequest(BaseModel):
+    language: str | None = None
     message: str = Field(..., min_length=1, examples=["What is gradient descent?"])
     thread_id: str = Field(..., examples=["student1-chat1"])
     course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])

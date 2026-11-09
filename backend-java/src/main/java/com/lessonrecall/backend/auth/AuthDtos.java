@@ -7,7 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public final class AuthDtos {
-
+    public record LanguageRequest(@Size(max = 30) String language) {}
+    public record LanguageResponse(String language) {}
     public record RegisterRequest(
             @NotBlank String name,
             @NotBlank @Email String email,

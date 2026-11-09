@@ -35,7 +35,8 @@ public final class AiDtos {
     public record ChatRequest(String message,
                               @JsonProperty("thread_id") String threadId,
                               @JsonProperty("course_id") String courseId,
-                              @JsonProperty("video_id") String videoId) {}
+                              @JsonProperty("video_id") String videoId,String language) {}
+
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChatResponse(String answer,

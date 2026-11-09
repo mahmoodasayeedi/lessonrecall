@@ -12,7 +12,7 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter @Setter @NoArgsConstructor
 public class User {
-
+    private String answerLanguage;   // null = same language as the question
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

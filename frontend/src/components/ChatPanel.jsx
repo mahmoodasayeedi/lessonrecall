@@ -12,6 +12,22 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   const endRef = useRef(null)
   const [suggestions, setSuggestions] = useState([])
     // Continue the newest chat of this course, if there is one
+  const QUICK = {
+  English: ['Explain that more simply', 'Give me an example', 'Quiz me on this'],
+  German:  ['Erkläre das einfacher', 'Gib mir ein Beispiel', 'Frag mich dazu ab'],
+  Spanish: ['Explícalo más fácil', 'Dame un ejemplo', 'Hazme un quiz sobre esto'],
+  French:  ['Explique plus simplement', 'Donne-moi un exemple', 'Fais-moi un quiz là-dessus'],
+  Arabic:  ['اشرح ذلك بشكل أبسط', 'أعطني مثالاً', 'اختبرني في هذا'],
+  Urdu:    ['اسے آسان الفاظ میں سمجھائیں', 'ایک مثال دیں', 'اس پر میرا کوئز لیں'],
+  Hindi:   ['इसे और आसान तरीके से समझाइए', 'एक उदाहरण दीजिए', 'इस पर मेरा क्विज़ लीजिए'],
+}
+const [language, setLanguage] = useState('')
+useEffect(() => {
+  api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
+}, [])
+
+const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question" → English
+
   useEffect(() => {
     async function loadLatestChat() {
       try {
@@ -115,9 +131,12 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
           ))}
         </div>
       )}
-        {['Explain that more simply', 'Give me an example', 'Quiz me on this'].map((q) => (
-          <button key={q} className="btn" style={{ padding: '8px 12px', fontSize: 13, fontWeight: 400, borderRadius: 999 }}
-                  disabled={busy || messages.length === 0} onClick={() => send(q)}>{q}</button>
+        {quickActions.map((q) => (
+          <button key={q} onClick={() => send(q)}
+  style={{ alignSelf: 'flex-start', background: 'var(--ink)', color: '#fff', border: 'none',
+           borderRadius: 999, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}>
+  {q}
+</button>
         ))}
       </div>
 

@@ -54,10 +54,14 @@ public class ChatService {
 
     public ChatReply send(Long userId, Long sessionId, String text, String videoId) {
         ChatSession s = ownSession(userId, sessionId);
+
+        String language = users.findById(userId)
+                .map(u -> u.getAnswerLanguage())
+                .orElse(null);
         courses.requireAccess(userId, s.getCourse().getId());   // still enrolled?
 
         ChatMessage userMsg = save(s, "user", text);
-        var result = ai.chat(text, s.getThreadId(), s.getCourse().getSlug(), videoId);
+        var result = ai.chat(text, s.getThreadId(), s.getCourse().getSlug(), videoId, language);
         ChatMessage botMsg = save(s, "assistant", result.answer());
 
         if ("New chat".equals(s.getTitle())) {                   // first question becomes the title

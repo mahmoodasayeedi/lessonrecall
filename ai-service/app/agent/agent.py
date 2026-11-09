@@ -35,7 +35,9 @@ def fix_citations(text: str) -> str:
     text = PAGE.sub(lambda m: f"(page {m.group(1)})", text)
     return text.replace("CITE AS:", "").strip()
 
-def chat(message: str, thread_id: str, course_id: str, video_id: str | None = None) -> dict:
+def chat(message, thread_id, course_id, video_id=None, language: str | None = None):
+    if language:
+        message = f"{message}\n\n[Reply in {language}. Keep every citation exactly as given.]"
     agent = create_react_agent(
         get_llm(),
         make_tools(course_id, video_id),
@@ -55,20 +57,22 @@ def chat(message: str, thread_id: str, course_id: str, video_id: str | None = No
         "answer": answer,
         "tools_used": tools_used,
         "thread_id": thread_id,
-        "suggestions": suggest_followups(message, answer),
+        "suggestions": suggest_followups(message, answer,language),
     }
 class FollowUps(BaseModel):
     questions: list[str] = Field(description="Exactly 3 short follow-up questions, max 12 words each")
 
 
-def suggest_followups(question: str, answer: str) -> list[str]:
+def suggest_followups(question: str, answer: str, language: str | None = None) -> list[str]:
     """3 questions the student could ask next. Never breaks the chat if it fails."""
-    if "not cover" in answer.lower():
+    if not CITATION.search(answer) and not PAGE.search(answer):   # ← replaces the "not cover" check
         return []
+    lang_rule = f" Write the suggestions in {language}." if language else ""
     try:
         result = get_llm().with_structured_output(FollowUps).invoke(
             f"A student asked: {question}\nThe tutor answered: {answer}\n"
             "Suggest 3 short follow-up questions the student could ask next about the same lesson."
+            + lang_rule
         )
         return result.questions[:3]
     except Exception:
