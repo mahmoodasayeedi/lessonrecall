@@ -17,6 +17,7 @@ export default function Header() {
       <nav aria-label="Main" style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         <NavLink to="/home" style={linkStyle}>My courses</NavLink>
         <NavLink to="/catalog" style={linkStyle}>Catalog</NavLink>
+        <NavLink to="/settings" style={linkStyle}>Settings</NavLink>
       </nav>
     {user && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>

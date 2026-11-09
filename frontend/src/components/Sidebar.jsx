@@ -36,6 +36,7 @@ export default function Sidebar({ courseId, materials = [], selectedId, onSelect
       <nav aria-label="Main" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <NavLink to="/home" style={linkStyle}>My courses</NavLink>
         <NavLink to="/catalog" style={linkStyle}>Catalog</NavLink>
+        <NavLink to="/settings" style={linkStyle}>Settings</NavLink>
       </nav>
 
       <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', padding: '6px 4px 0' }}>

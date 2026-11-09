@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import CatalogPage from './pages/CatalogPage'
 import CoursePage from './pages/CoursePage'
 import RequireAuth from './auth/RequireAuth'
+import SettingsPage from './pages/SettingsPage'
 
 function Placeholder({ title }) {
   return (
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/catalog" element={<RequireAuth><CatalogPage /></RequireAuth>} />
       <Route path="/courses/:id" element={<RequireAuth><CoursePage /></RequireAuth>} />
       <Route path="*" element={<Placeholder title="Page not found" />} />
+      <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
     </Routes>
   )
 }

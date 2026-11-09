@@ -19,4 +19,7 @@ public final class AuthDtos {
     public record AuthResponse(String token, Long userId, String name, String email, Role role) {}
 
     private AuthDtos() {}
+    public record ChangePasswordRequest(
+            @NotBlank String currentPassword,
+            @NotBlank @Size(min = 8, message = "New password must have at least 8 characters") String newPassword) {}
 }

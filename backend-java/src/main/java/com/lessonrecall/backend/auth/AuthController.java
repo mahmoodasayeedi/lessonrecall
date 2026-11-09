@@ -5,6 +5,7 @@ import com.lessonrecall.backend.user.User;
 import com.lessonrecall.backend.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -63,5 +64,20 @@ public class AuthController {
 
     private AuthResponse toResponse(User user) {
         return new AuthResponse(tokenService.createToken(user), user.getId(), user.getName(), user.getEmail(), user.getRole());
+    }
+    @PutMapping("/password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal Jwt jwt,
+                                               @Valid @RequestBody ChangePasswordRequest req) {
+        User user = users.findById(Long.parseLong(jwt.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (!passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is wrong");
+        }
+        if (passwordEncoder.matches(req.newPassword(), user.getPasswordHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different");
+        }
+        user.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        users.save(user);
+        return ResponseEntity.noContent().build();
     }
 }
