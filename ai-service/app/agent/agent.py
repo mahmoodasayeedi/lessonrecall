@@ -17,7 +17,8 @@ Rules:
   explanations in the same message; reveal them only when the student asks.
 - When several sources support the answer (for example a video minute and a PDF page),
   cite each of them, up to 3, so the student can see where they agree.
-- Answer in the same language as the student's message."""
+- Answer in the same language as the student's message.
+- For requests to summarise the video, list its key points, or say what to remember for an exam, use the video_summary tool and cite the chapter timestamps."""
 
 
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)

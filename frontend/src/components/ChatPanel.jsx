@@ -3,6 +3,25 @@ import { api } from '../api'
 import AnswerText, { analyse } from './AnswerText'
 import { speak, stopSpeaking } from './speech'
 
+ const QUICK = {
+  English: ['Explain that more simply', 'Give me an example', 'Quiz me on this'],
+  German:  ['Erkläre das einfacher', 'Gib mir ein Beispiel', 'Frag mich dazu ab'],
+  Spanish: ['Explícalo más fácil', 'Dame un ejemplo', 'Hazme un quiz sobre esto'],
+  French:  ['Explique plus simplement', 'Donne-moi un exemple', 'Fais-moi un quiz là-dessus'],
+  Arabic:  ['اشرح ذلك بشكل أبسط', 'أعطني مثالاً', 'اختبرني في هذا'],
+  Urdu:    ['اسے آسان الفاظ میں سمجھائیں', 'ایک مثال دیں', 'اس پر میرا کوئز لیں'],
+  Hindi:   ['इसे और आसान तरीके से समझाइए', 'एक उदाहरण दीजिए', 'इस पर मेरा क्विज़ लीजिए'],
+}
+const STARTERS = {
+  English: ['What is this video about?', 'Summarise the key points', 'What should I remember for the exam?'],
+  German:  ['Worum geht es in diesem Video?', 'Fasse die wichtigsten Punkte zusammen', 'Was sollte ich mir für die Prüfung merken?'],
+  Spanish: ['¿De qué trata este video?', 'Resume los puntos clave', '¿Qué debo recordar para el examen?'],
+  French:  ['De quoi parle cette vidéo ?', 'Résume les points clés', 'Que dois-je retenir pour l’examen ?'],
+  Arabic:  ['عن ماذا يتحدث هذا الفيديو؟', 'لخّص النقاط الرئيسية', 'ماذا يجب أن أتذكر للامتحان؟'],
+  Urdu:    ['یہ ویڈیو کس بارے میں ہے؟', 'اہم نکات کا خلاصہ کریں', 'امتحان کے لیے مجھے کیا یاد رکھنا چاہیے؟'],
+  Hindi:   ['यह वीडियो किस बारे में है?', 'मुख्य बिंदुओं का सारांश दें', 'परीक्षा के लिए मुझे क्या याद रखना चाहिए?'],
+}
+
 export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange }) {
   const [sessionId, setSessionId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -12,17 +31,12 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   const [error, setError] = useState('')
   const endRef = useRef(null)
   const [suggestions, setSuggestions] = useState([])
+  
     // Continue the newest chat of this course, if there is one
-  const QUICK = {
-  English: ['Explain that more simply', 'Give me an example', 'Quiz me on this'],
-  German:  ['Erkläre das einfacher', 'Gib mir ein Beispiel', 'Frag mich dazu ab'],
-  Spanish: ['Explícalo más fácil', 'Dame un ejemplo', 'Hazme un quiz sobre esto'],
-  French:  ['Explique plus simplement', 'Donne-moi un exemple', 'Fais-moi un quiz là-dessus'],
-  Arabic:  ['اشرح ذلك بشكل أبسط', 'أعطني مثالاً', 'اختبرني في هذا'],
-  Urdu:    ['اسے آسان الفاظ میں سمجھائیں', 'ایک مثال دیں', 'اس پر میرا کوئز لیں'],
-  Hindi:   ['इसे और आसान तरीके से समझाइए', 'एक उदाहरण दीजिए', 'इस पर मेरा क्विज़ लीजिए'],
-}
+ 
 const [language, setLanguage] = useState('')
+
+
 useEffect(() => {
   api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
 }, [])
@@ -37,7 +51,7 @@ function toggleSpeak(id, text) {
   speak(text, language, () => setSpeakingId(null))
 }
 const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question" → English
-
+const starters = STARTERS[language] ?? STARTERS.English
   useEffect(() => {
     async function loadLatestChat() {
       try {
@@ -101,14 +115,13 @@ const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question"
   )
 
   return (
-    <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 , height: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-  <img src="/avatar.png" alt="LessonRecall tutor" className={speakingId !== null ? 'speaking' : ''}
-       style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--mint)' }} />
-  <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
-</div>
+        <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src="/avatar.png" alt="LessonRecall tutor" className={speakingId !== null ? 'speaking' : ''}
+               style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--mint)' }} />
+          <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
+        </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div role="group" aria-label="Search scope" style={{ display: 'inline-flex', padding: 3, borderRadius: 10, background: 'var(--soft)' }}>
             {scopeButton('video', 'This video')}
@@ -119,7 +132,33 @@ const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question"
       </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-        {messages.length === 0 && <p className="muted" style={{ margin: 0 }}>Ask anything about this course. Every answer links to the exact minute.</p>}
+       {messages.length === 0 && !busy && (
+  <div style={{ display: 'grid', justifyItems: 'center', textAlign: 'center', gap: 14, padding: '32px 12px' }}>
+    <img src="/avatar.png" alt="" className={speakingId === 'intro' ? 'speaking' : ''}
+         style={{ width: 88, height: 88, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--mint)' }} />
+    <div>
+      <h3 style={{ fontSize: 20, marginBottom: 4 }}>Hi! What would you like to recall?</h3>
+      <p className="muted" style={{ maxWidth: 380 }}>
+        I answer only from this course, and every answer links to the exact minute.
+      </p>
+    </div>
+    <button className="btn" style={{ padding: '4px 12px', fontSize: 13 }}
+            onClick={() => toggleSpeak('intro',
+              'Hi! Ask me anything about this course. I answer only from your videos and slides, and every answer links to the exact minute.')}>
+      {speakingId === 'intro' ? '■ Stop' : '🔊 Hear intro'}
+    </button>
+    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
+      {starters.map((q) => (
+        <button key={q} onClick={() => send(q)}
+          style={{ background: 'var(--soft)', color: 'var(--ink)', border: '1px solid var(--line)', borderRadius: 999,
+                   padding: '8px 14px', fontSize: 14, fontFamily: 'inherit', cursor: 'pointer' }}>
+          {q}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
         {messages.map((m,i) => m.role === 'user' ? (
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
                                    padding: '10px 14px', borderRadius: '14px 14px 4px 14px', fontSize: 14 }}>{m.content}</div>

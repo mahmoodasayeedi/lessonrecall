@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from app.config import get_settings
 from app.rag.answer import location
 from app.rag.vector_store import list_documents, search
-
+from app.rag.summary import summarize_video
 
 def get_llm() -> ChatOpenAI:
     s = get_settings()
@@ -78,6 +78,23 @@ def make_tools(course_id: str, video_id: str | None = None) -> list:
         return json.dumps(result)
 
     @tool
+    def video_summary() -> str:
+        """Summarise the WHOLE current video: summary, key points and chapters with timestamps.
+        Use for: 'summarise', 'key points', 'what is this video about', 'what should I remember / exam'."""
+        if not video_id:
+            return "NO_RELEVANT_CONTENT"
+        result = summarize_video(course_id, video_id)
+        if not result:
+            return "NO_RELEVANT_CONTENT"
+        lines = [f"SUMMARY: {result['summary']}", "KEY POINTS:"]
+        lines += [f"- {point}" for point in result["key_points"]]
+        lines.append("CHAPTERS:")
+        for ch in result["chapters"]:
+            cite = f" | CITE AS: ({ch['timestamp']}, {ch['url']})" if ch["url"] else ""
+            lines.append(f"- {ch['timestamp']} {ch['title']}{cite}")
+        return "\n".join(lines)
+    
+    @tool
     def study_planner(goal: str, days: int, minutes_per_day: int) -> str:
         """Create a day-by-day study plan for the course, e.g. 'exam in 10 days, 60 minutes a day'."""
         materials = "\n".join(f"- {d['title']} ({d['type']})" for d in list_documents(course_id))
@@ -89,5 +106,5 @@ def make_tools(course_id: str, video_id: str | None = None) -> list:
 
     if video_id:
         # "This video" scope: the agent can only search the current video
-        return [video_search, quiz_generator, study_planner]
+        return [video_search,video_summary, quiz_generator, study_planner]
     return [video_search, course_search, quiz_generator, study_planner]
