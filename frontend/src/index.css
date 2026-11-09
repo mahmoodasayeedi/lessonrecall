@@ -160,3 +160,17 @@ a {
 .speaking {
   animation: speak-ring 1s ease-out infinite;
 }
+
+@keyframes listen-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(180, 35, 90, 0.45);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px rgba(180, 35, 90, 0);
+  }
+}
+
+.listening {
+  animation: listen-ring 1s ease-out infinite;
+}

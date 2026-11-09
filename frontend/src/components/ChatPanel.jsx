@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import AnswerText, { analyse } from './AnswerText'
-import { speak, stopSpeaking } from './speech'
+
+import { speak, stopSpeaking, createRecognizer } from './speech'
+import { toast } from './toast'
 
  const QUICK = {
   English: ['Explain that more simply', 'Give me an example', 'Quiz me on this'],
@@ -31,6 +33,8 @@ export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange 
   const [error, setError] = useState('')
   const endRef = useRef(null)
   const [suggestions, setSuggestions] = useState([])
+  const [listening, setListening] = useState(false)
+const recognizerRef = useRef(null)
   
     // Continue the newest chat of this course, if there is one
  
@@ -113,7 +117,23 @@ const starters = STARTERS[language] ?? STARTERS.English
                background: scope === value ? '#fff' : 'transparent', color: scope === value ? 'var(--ink)' : 'var(--muted)',
                fontWeight: scope === value ? 600 : 400 }}>{text}</button>
   )
-
+function toggleMic() {
+  if (listening) { recognizerRef.current?.stop(); return }
+  stopSpeaking()                                        // don't listen while she is talking
+  const recognizer = createRecognizer({
+    language,
+    onText: (text) => setInput(text),                   // ← your input state setter
+    onEnd: () => setListening(false),
+    onError: (err) => {
+      setListening(false)
+      toast(err === 'not-allowed' ? 'Please allow microphone access' : `Voice input failed: ${err}`, 'error')
+    },
+  })
+  if (!recognizer) { toast('Voice input works in Chrome or Edge', 'error'); return }
+  recognizerRef.current = recognizer
+  setListening(true)
+  recognizer.start()
+}
   return (
         <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14, height: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -200,6 +220,14 @@ const starters = STARTERS[language] ?? STARTERS.English
         <label htmlFor="question" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Your question</label>
         <input id="question" className="input" placeholder="Ask about this lesson…" value={input}
                onChange={(e) => setInput(e.target.value)} disabled={busy} />
+          <button type="button" onClick={toggleMic} disabled={busy}
+        aria-label={listening ? 'Stop voice input' : 'Ask by voice'} title={listening ? 'Stop' : 'Ask by voice'}
+        className={listening ? 'listening' : ''}
+        style={{ width: 46, height: 46, borderRadius: '50%', border: '1px solid var(--line)', cursor: 'pointer',
+                 fontSize: 18, flexShrink: 0,
+                 background: listening ? 'var(--rose)' : '#fff', color: listening ? '#fff' : 'var(--ink)' }}>
+  {listening ? '■' : '🎤'}
+</button>     
         <button className="btn btn-primary" disabled={busy || !input.trim()}>Ask</button>
       </form>
     </section>
