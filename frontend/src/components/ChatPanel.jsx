@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api'
 import AnswerText, { analyse } from './AnswerText'
+import { speak, stopSpeaking } from './speech'
 
 export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange }) {
   const [sessionId, setSessionId] = useState(null)
@@ -26,6 +27,15 @@ useEffect(() => {
   api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
 }, [])
 
+const [speakingId, setSpeakingId] = useState(null)
+
+useEffect(() => () => stopSpeaking(), [])   // stop talking when leaving the page
+
+function toggleSpeak(id, text) {
+  if (speakingId === id) { stopSpeaking(); setSpeakingId(null); return }
+  setSpeakingId(id)
+  speak(text, language, () => setSpeakingId(null))
+}
 const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question" → English
 
   useEffect(() => {
@@ -92,6 +102,11 @@ const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question"
 
   return (
     <section aria-label="Ask LessonRecall" className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 , height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+  <img src="/avatar.png" alt="LessonRecall tutor" className={speakingId !== null ? 'speaking' : ''}
+       style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--mint)' }} />
+  <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
+</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <h2 style={{ fontSize: 20 }}>Ask LessonRecall</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -105,11 +120,13 @@ const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question"
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {messages.length === 0 && <p className="muted" style={{ margin: 0 }}>Ask anything about this course. Every answer links to the exact minute.</p>}
-        {messages.map((m) => m.role === 'user' ? (
+        {messages.map((m,i) => m.role === 'user' ? (
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
                                    padding: '10px 14px', borderRadius: '14px 14px 4px 14px', fontSize: 14 }}>{m.content}</div>
         ) : (
-          <AnswerCard key={m.id} message={m} onPlay={onPlay} />
+          <AnswerCard message={m} onPlay={onPlay}
+            speaking={speakingId === i}
+            onListen={() => toggleSpeak(i, m.content)} />
         ))}
         {busy && <div className="muted" role="status">Thinking… searching the course</div>}
         <div ref={endRef} />
@@ -150,7 +167,7 @@ const quickActions = QUICK[language] ?? QUICK.English   // "Same as my question"
   )
 }
 
-function AnswerCard({ message, onPlay }) {
+function AnswerCard({ message, onPlay, speaking, onListen }) {
   const info = analyse(message.content)
   if (info.notCovered) {
     return (
@@ -169,9 +186,14 @@ function AnswerCard({ message, onPlay }) {
         </div>
       )}
       <AnswerText text={message.content} onPlay={onPlay} />
-      {message.toolsUsed?.length > 0 && (
-        <div className="muted" style={{ fontSize: 12, marginTop: 10 }}>Used: {message.toolsUsed.join(', ')}</div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
+        <button className="btn" onClick={onListen} style={{ padding: '4px 12px', fontSize: 13 }}>
+          {speaking ? '■ Stop' : '🔊 Listen'}
+        </button>
+        {message.toolsUsed?.length > 0 && (
+          <span className="muted" style={{ fontSize: 12 }}>Used: {message.toolsUsed.join(', ')}</span>
+        )}
+      </div>
     </div>
   )
 }

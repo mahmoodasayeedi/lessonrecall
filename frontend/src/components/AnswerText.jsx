@@ -1,5 +1,5 @@
 // Finds "(10:17, https://www.youtube.com/watch?v=ID&t=617s)" and "(page 6)" in the answer
-const CITATION = /\(\s*(?:CITE AS:\s*)?(\d+:\d{2}(?::\d{2})?),\s*https:\/\/www\.youtube\.com\/watch\?v=([\w-]+)&t=(\d+)s\s*\)|\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)/g
+export const CITATION = /\(\s*(?:CITE AS:\s*)?(\d+:\d{2}(?::\d{2})?),\s*https:\/\/www\.youtube\.com\/watch\?v=([\w-]+)&t=(\d+)s\s*\)|\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)/g
 
 export function analyse(text) {
   const videoMoments = new Set()
