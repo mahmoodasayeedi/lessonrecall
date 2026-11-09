@@ -16,4 +16,5 @@ public final class CourseDtos {
                                  Visibility visibility, String ownerName, String myRelation) {}
 
     private CourseDtos() {}
+    public record UpdateCourseRequest(@NotBlank String title, String description) {}
 }

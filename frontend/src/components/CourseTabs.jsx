@@ -2,7 +2,7 @@ import AddMaterialForm from './AddMaterialForm'
 
 const TABS = ['Transcript', 'Chapters', 'Quiz', 'Flashcards', 'Materials']
 
-export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, isOwner, courseId, onAdded,
+export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, isOwner, courseId, onAdded, onDeleteMaterial,
                                      transcriptSlot, quizSlot, flashcardsSlot }) {
   return (
     <section className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
@@ -43,9 +43,15 @@ export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, i
                     <div>{m.type === 'PDF' ? 'PDF · ' : ''}{m.title}</div>
                     {m.status === 'FAILED' && <div className="error" style={{ fontSize: 13 }}>{m.errorMessage}</div>}
                   </div>
-                  <span className={`badge ${m.status === 'READY' ? 'badge-mint' : m.status === 'FAILED' ? 'badge-rose' : 'badge-soft'}`}>
-                    {m.status.charAt(0) + m.status.slice(1).toLowerCase()}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+  <span className={`badge ${m.status === 'READY' ? 'badge-mint' : m.status === 'FAILED' ? 'badge-rose' : 'badge-soft'}`}>
+    {m.status.charAt(0) + m.status.slice(1).toLowerCase()}
+  </span>
+  {isOwner && (
+    <button className="btn" style={{ color: 'var(--rose)', padding: '4px 10px', fontSize: 13 }}
+            onClick={() => onDeleteMaterial(m)}>Delete</button>
+  )}
+</div>
                 </li>
               ))}
             </ul>

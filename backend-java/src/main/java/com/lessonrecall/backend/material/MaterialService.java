@@ -4,8 +4,10 @@ import com.lessonrecall.backend.ai.AiClient;
 import com.lessonrecall.backend.ai.AiDtos;
 import com.lessonrecall.backend.course.Course;
 import com.lessonrecall.backend.course.CourseService;
+import com.lessonrecall.backend.progress.QuizResultRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,13 +24,15 @@ public class MaterialService {
                                    String externalId, Integer durationSeconds) {}
 
     private final MaterialRepository materials;
+    private final QuizResultRepository quizResultRepository;
     private final CourseService courses;
     private final AiClient ai;
 
-    public MaterialService(MaterialRepository materials, CourseService courses, AiClient ai) {
+    public MaterialService(MaterialRepository materials, CourseService courses, AiClient ai, QuizResultRepository quizResultRepository) {
         this.materials = materials;
         this.courses = courses;
         this.ai = ai;
+        this.quizResultRepository=quizResultRepository;
     }
 
     // ---------- Add materials (owner only) ----------
@@ -141,4 +145,16 @@ public class MaterialService {
         return ai.quiz(course.getSlug(), m.getExternalId(), Math.max(1, Math.min(count, 10)));
     }
 
+    @Transactional
+    public void delete(Long courseId, Long materialId, Long userId) {
+        Course course = courses.requireOwner(userId, courseId);
+        Material material = materials.findByIdAndCourseId(materialId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+        if (material.getExternalId() != null) {
+            ai.deleteMaterial(course.getSlug(), material.getExternalId());
+
+            quizResultRepository.deleteByCourseIdAndVideoId(courseId, material.getExternalId());
+        }
+        materials.delete(material);
+    }
 }

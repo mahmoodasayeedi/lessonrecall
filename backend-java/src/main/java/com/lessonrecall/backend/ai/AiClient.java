@@ -89,4 +89,13 @@ public class AiClient {
                 .retrieve()
                 .body(QuizResponse.class);
     }
+
+    public void deleteCourse(String courseSlug) {
+        rest.delete().uri("/courses/{c}", courseSlug).retrieve().toBodilessEntity();
+    }
+
+    public void deleteMaterial(String courseSlug, String externalId) {
+        rest.delete().uri("/courses/{c}/documents/{d}", courseSlug, externalId)
+                .retrieve().toBodilessEntity();
+    }
 }

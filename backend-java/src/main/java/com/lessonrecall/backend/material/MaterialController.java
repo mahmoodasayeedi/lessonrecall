@@ -5,6 +5,7 @@ import com.lessonrecall.backend.material.MaterialService.MaterialResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -56,4 +57,11 @@ public class MaterialController {
                                     @PathVariable Long materialId, @RequestParam(defaultValue = "5") int count) {
         return service.quiz(Long.valueOf(jwt.getSubject()), courseId, materialId, count);
     }
+    @DeleteMapping("/{materialId}")
+    public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long materialId,
+                                       @AuthenticationPrincipal Jwt jwt) {
+        service.delete(courseId, materialId, Long.parseLong(jwt.getSubject()));
+        return ResponseEntity.noContent().build();
+    }
+
 }

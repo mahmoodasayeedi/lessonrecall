@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth/AuthContext'
@@ -15,9 +15,11 @@ export default function HomePage() {
   const [form, setForm] = useState({ title: '', description: '', visibility: isInstructor ? 'CLASS' : 'PRIVATE' })
   const [creating, setCreating] = useState(false)
 
-  useEffect(() => {
-    api('/courses/mine').then(setCourses).catch((e) => setError(e.message))
-  }, [])
+ const loadCourses = useCallback(() => {
+  api('/courses/mine').then(setCourses).catch((e) => setError(e.message))
+}, [])
+
+useEffect(() => { loadCourses() }, [loadCourses])
 
   async function createCourse(e) {
     e.preventDefault()
@@ -52,7 +54,7 @@ export default function HomePage() {
             </div>
           )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-            {courses?.map((c) => <CourseCard key={`${c.id}-${c.myRelation}`} course={c} />)}
+            {courses?.map((c) => <CourseCard key={c.id} course={c} onChanged={loadCourses} />)}
           </div>
         </section>
 

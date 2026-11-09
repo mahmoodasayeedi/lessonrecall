@@ -1,9 +1,16 @@
 package com.lessonrecall.backend.course;
 
+import com.lessonrecall.backend.ai.AiClient;
+import com.lessonrecall.backend.chat.ChatMessageRepository;
+import com.lessonrecall.backend.chat.ChatSessionRepository;
 import com.lessonrecall.backend.course.CourseDtos.*;
+import com.lessonrecall.backend.material.MaterialRepository;
+import com.lessonrecall.backend.progress.QuizResultRepository;
 import com.lessonrecall.backend.user.Role;
 import com.lessonrecall.backend.user.User;
 import com.lessonrecall.backend.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,16 +25,30 @@ import java.util.stream.Collectors;
 @Transactional
 public class CourseService {
 
+    private static final Logger log = LoggerFactory.getLogger(CourseService.class);
+
     private final CourseRepository courses;
     private final EnrollmentRepository enrollments;
     private final UserRepository users;
+    private final MaterialRepository materials;
+    private final QuizResultRepository quizResults;
+    private final ChatSessionRepository chatSessions;
+    private final ChatMessageRepository chatMessages;
+    private final AiClient ai;
 
-    public CourseService(CourseRepository courses, EnrollmentRepository enrollments, UserRepository users) {
+    public CourseService(CourseRepository courses, EnrollmentRepository enrollments, UserRepository users,
+                         MaterialRepository materials, QuizResultRepository quizResults,
+                         ChatSessionRepository chatSessions, ChatMessageRepository chatMessages,
+                         AiClient ai) {
         this.courses = courses;
         this.enrollments = enrollments;
         this.users = users;
+        this.materials = materials;
+        this.quizResults = quizResults;
+        this.chatSessions = chatSessions;
+        this.chatMessages = chatMessages;
+        this.ai = ai;
     }
-
     public CourseResponse create(Long userId, CreateCourseRequest request) {
         User user = users.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -103,7 +124,7 @@ public class CourseService {
     public Course requireOwner(Long userId, Long courseId) {
         Course course = requireAccess(userId, courseId);   // 404 if no access at all
         if (!course.getOwner().getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the course owner can change materials");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the course owner can do this");
         }
         return course;
     }
@@ -133,5 +154,41 @@ public class CourseService {
     private CourseResponse toResponse(Course c, String relation) {
         return new CourseResponse(c.getId(), c.getTitle(), c.getSlug(), c.getDescription(),
                 c.getVisibility(), c.getOwner().getName(), relation);
+    }
+
+    @Transactional
+    public CourseResponse update(Long courseId, Long userId, UpdateCourseRequest req) {
+        Course course = requireOwner(userId, courseId);
+        course.setTitle(req.title());
+        course.setDescription(req.description());
+        return toResponse(course, "OWNER");
+    }
+
+    @Transactional
+    public void delete(Long courseId, Long userId) {
+        Course course = requireOwner(userId, courseId);
+        chatMessages.deleteByCourseId(courseId);
+        chatSessions.deleteByCourseId(courseId);
+        quizResults.deleteByCourseId(courseId);
+        materials.deleteByCourseId(courseId);
+        enrollments.deleteByCourseId(courseId);
+        courses.delete(course);
+        try {
+            ai.deleteCourse(course.getSlug());
+        } catch (Exception e) {
+            log.warn("Could not delete Pinecone namespace {}: {}", course.getSlug(), e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void leave(Long courseId, Long userId) {
+        Course course = courses.findById(courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
+        if (course.getOwner().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You own this course. Delete it instead of leaving.");
+        }
+        if (enrollments.deleteByUserIdAndCourseId(userId, courseId) == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "You are not enrolled in this course");
+        }
     }
 }

@@ -3,7 +3,7 @@ import time
 from functools import lru_cache
 
 from pinecone import Pinecone, ServerlessSpec
-
+from pinecone.exceptions import NotFoundException  
 from app.config import get_settings
 from app.models import Chunk
 from app.rag.embeddings import embed_texts
@@ -77,3 +77,23 @@ def list_documents(course_id: str) -> list[dict]:
             meta = next(iter(found.values())).metadata
             docs.append({"id": doc_id, "title": meta["title"], "type": meta["source_type"]})
     return docs
+
+
+def delete_course_vectors(course_id: str) -> None:
+    """Delete the whole namespace of a course."""
+    try:
+        get_index().delete(delete_all=True, namespace=course_id)
+    except NotFoundException:
+        pass   # namespace was already empty: nothing to delete
+
+
+def delete_document_vectors(course_id: str, doc_id: str) -> int:
+    """Delete all chunks of one video/PDF. Chunk IDs look like '<doc_id>-<n>'."""
+    index = get_index()
+    ids = []
+    for page in index.list(prefix=f"{doc_id}-", namespace=course_id):   # one page at a time
+        for item in page:                                                # items in that page
+            ids.append(item if isinstance(item, str) else item.id)       # ListItem → "abc-0"
+    for start in range(0, len(ids), 1000):
+        index.delete(ids=ids[start:start + 1000], namespace=course_id)
+    return len(ids)

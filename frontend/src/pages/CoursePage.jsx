@@ -10,6 +10,7 @@ import { citedMoments } from '../components/AnswerText'
 import TranscriptPanel from '../components/TranscriptPanel'
 import QuizPanel from '../components/QuizPanel'
 import FlashcardsPanel from '../components/FlashcardsPanel'
+import AddMaterialForm from '../components/AddMaterialForm'
 
 const toSeconds = (t) => t.split(':').reduce((acc, p) => acc * 60 + Number(p), 0)
 
@@ -29,9 +30,12 @@ export default function CoursePage() {
   const [quizLoading, setQuizLoading] = useState(false)
   const [quizError, setQuizError] = useState('')
   const [weakTopics, setWeakTopics] = useState([])
+  const [materialsLoaded, setMaterialsLoaded] = useState(false)
+
   const loadMaterials = useCallback(() => {
     api(`/courses/${id}/materials`).then((list) => {
       setMaterials(list)
+      setMaterialsLoaded(true)
       setSelected((cur) => cur ?? list.find((m) => m.type === 'YOUTUBE' && m.status === 'READY') ?? null)
     }).catch((e) => setError(e.message))
   }, [id])
@@ -86,6 +90,18 @@ export default function CoursePage() {
       console.error('Could not save quiz results', e)
     }
   }
+ async function deleteMaterial(m) {
+  if (!window.confirm(`Delete "${m.title}"? Its chunks and quiz results are removed too.`)) return
+  try {
+    await api(`/courses/${id}/materials/${m.id}`, { method: 'DELETE' })
+    setSelected(null)                                       // stop showing the deleted video
+    setSeek({ start: 0, key: 0 })
+    setWeakTopics(await api(`/courses/${id}/weak-topics`))  // remove its rose zones
+    loadMaterials()                                         // picks the next video, or none
+  } catch (e) {
+    alert(e.message)
+  }
+}
   function selectMaterial(m) {
     setSelected(m)
     setSeek({ start: 0, key: 0 })
@@ -95,6 +111,28 @@ export default function CoursePage() {
   if (!course) return <div className="page"><p className="muted" style={{ paddingTop: 24 }}>Loading…</p></div>
 
   const isOwner = course.myRelation === 'OWNER'
+  if (materialsLoaded && materials.length === 0) {
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar courseId={id} materials={materials} selectedId={null} onSelect={selectMaterial} />
+      <main style={{ flex: 1, padding: '40px 24px', display: 'flex', justifyContent: 'center' }}>
+        <div className="card" style={{ maxWidth: 560, width: '100%', display: 'grid', gap: 16 }}>
+          <div className="muted" style={{ fontSize: 13 }}>{course.title}</div>
+          <h1 style={{ fontSize: 26 }}>No materials yet</h1>
+          {isOwner ? (
+            <>
+              <p className="muted">Add a YouTube link, a video/audio file or a PDF to start learning with LessonRecall.</p>
+              <AddMaterialForm courseId={id} onAdded={loadMaterials} />
+            </>
+          ) : (
+            <p className="muted">Your instructor hasn't added any materials to this course yet.</p>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
+
   const pins = [...new Set(chatMessages.filter((m) => m.role === 'assistant')
     .flatMap((m) => citedMoments(m.content))
     .filter((c) => c.videoId === selected?.externalId)
@@ -104,7 +142,7 @@ export default function CoursePage() {
     <CourseTabs tab={tab} setTab={setTab}
       chapters={chapters[selected?.id] || []}
       onSeek={(t) => playAt(toSeconds(t), selected.externalId)}
-      materials={materials} isOwner={isOwner} courseId={id} onAdded={loadMaterials}
+      materials={materials} isOwner={isOwner} courseId={id} onAdded={loadMaterials} onDeleteMaterial={deleteMaterial}
       transcriptSlot={<TranscriptPanel courseId={id} material={selected} pins={pins} current={seek.start}
                                        onSeek={(s) => playAt(s, selected.externalId)} />} 
     

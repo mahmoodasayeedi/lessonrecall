@@ -3,6 +3,7 @@ package com.lessonrecall.backend.course;
 import com.lessonrecall.backend.course.CourseDtos.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -47,5 +48,23 @@ public class CourseController {
     @GetMapping("/{id}")
     public CourseResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
         return service.get(userId(jwt), id);
+    }
+
+    @PutMapping("/{id}")
+    public CourseResponse update(@PathVariable Long id, @Valid @RequestBody UpdateCourseRequest req,
+                                 @AuthenticationPrincipal Jwt jwt) {
+        return service.update(id, Long.parseLong(jwt.getSubject()), req);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        service.delete(id, Long.parseLong(jwt.getSubject()));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/enrollment")
+    public ResponseEntity<Void> leave(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        service.leave(id, Long.parseLong(jwt.getSubject()));
+        return ResponseEntity.noContent().build();
     }
 }

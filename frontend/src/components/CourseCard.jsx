@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
-
+import CourseActions from './CourseActions'
 const relationBadge = {
   OWNER: <span className="badge badge-mint">Owner</span>,
   ENROLLED: <span className="badge badge-soft">Enrolled</span>,
   NOT_JOINED: null,
 }
 
-export default function CourseCard({ course, action }) {
+export default function CourseCard({ course, action, onChanged }) {
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
@@ -18,6 +18,7 @@ export default function CourseCard({ course, action }) {
       {course.description && <p className="muted" style={{ margin: 0, fontSize: 14 }}>{course.description}</p>}
       <div className="muted" style={{ fontSize: 13 }}>
         {course.visibility === 'CLASS' ? 'Class course' : 'Private course'} · by {course.ownerName}
+        <CourseActions course={course} isOwner={course.myRelation === 'OWNER'} onChanged={onChanged} />
       </div>
       {action}
     </div>

@@ -40,6 +40,7 @@ logging.basicConfig(level=logging.INFO)
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from app.rag.summary import summarize_video
 from app.rag.summary import load_video_chunks
+from app.rag.vector_store import delete_course_vectors, delete_document_vectors
 
 OPEN_PATHS = {"/health", "/docs", "/openapi.json"}
 
@@ -182,3 +183,13 @@ def quiz(request: QuizRequest) -> QuizResponse:
     if questions is None:
         raise NotFoundError("No video with this ID in this course.")
     return QuizResponse(video_id=request.video_id, questions=questions)
+
+@app.delete("/courses/{course_id}")
+def delete_course(course_id: str):
+    delete_course_vectors(course_id)
+    return {"deleted": True}
+
+
+@app.delete("/courses/{course_id}/documents/{doc_id}")
+def delete_document(course_id: str, doc_id: str):
+    return {"deleted": delete_document_vectors(course_id, doc_id)}
