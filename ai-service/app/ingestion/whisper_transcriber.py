@@ -30,24 +30,16 @@ def transcribe(audio_path: Path, language: str | None = None) -> tuple[list[Tran
         raise TranscriptionFailedError("OPENAI_API_KEY is not set in ai-service/.env.")
 
     client = OpenAI(api_key=settings.openai_api_key)
-    options = {"language": language} if language else {}
+    options = {"language": language} if language else {}   # empty = Whisper detects the language
     try:
         with audio_path.open("rb") as f:
-            if language:
-                result = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=f,
-                    response_format="verbose_json",
-                    timestamp_granularities=["segment"],
-                    **options,
-                )
-            else:
-                result = client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=f,
-                    response_format="verbose_json",
-                    timestamp_granularities=["segment"],
-                )
+            result = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f,
+                response_format="verbose_json",
+                timestamp_granularities=["segment"],
+                **options,
+            )
     except OpenAIError as e:
         raise TranscriptionFailedError(f"Whisper transcription failed: {e}") from e
 
@@ -63,5 +55,8 @@ def _language_code(language: str | None) -> str | None:
     """Whisper returns names like 'english' / 'german'; we store codes like YouTube does."""
     if not language:
         return None
-    names = {"english": "en", "german": "de"}
+    names = {
+        "english": "en", "german": "de", "spanish": "es", "french": "fr",
+        "arabic": "ar", "urdu": "ur", "hindi": "hi",
+    }
     return names.get(language.lower(), language.lower())

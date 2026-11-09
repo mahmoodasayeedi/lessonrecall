@@ -28,6 +28,8 @@ log = logging.getLogger(__name__)
 def watch_url(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
+
+
 def transcript_api() -> YouTubeTranscriptApi:
     """Use the residential proxy when configured (deployment), else a direct connection (local)."""
     s = get_settings()
@@ -61,10 +63,23 @@ def fetch_video_info(video_id: str) -> dict:
         return {"title": video_id, "duration": None}
 
 
-def fetch_youtube_transcript(video_id: str, languages: list[str]) -> tuple[list[TranscriptSegment], str] | None:
-    """Return (segments, language_code), or None if the video has no transcript."""
+def fetch_youtube_transcript(video_id: str, languages: list[str], auto: bool = False
+                             ) -> tuple[list[TranscriptSegment], str] | None:
+    """Return (segments, language_code), or None if the video has no transcript.
+
+    auto=True: no language chosen, so take YouTube's auto-generated captions,
+    which are always in the language actually spoken in the video.
+    """
     try:
-        fetched = YouTubeTranscriptApi().fetch(video_id, languages=languages)
+        if auto:
+            tracks = list(YouTubeTranscriptApi().list(video_id))
+            if not tracks:
+                return None
+            generated = [t for t in tracks if t.is_generated]          # spoken language
+            track = generated[0] if generated else tracks[0]
+            fetched = track.fetch()
+        else:
+            fetched = YouTubeTranscriptApi().fetch(video_id, languages=languages)
     except VideoUnavailable as e:
         raise VideoUnavailableError("This video is private, removed or doesn't exist.") from e
     except (TranscriptsDisabled, NoTranscriptFound):
@@ -105,13 +120,20 @@ def preferred_languages(language: str | None, defaults: list[str]) -> list[str]:
     ordered = ([language] if language else []) + defaults
     return list(dict.fromkeys(ordered))
 
+def pick_transcript(video_id: str, language: str | None):
+    """Choose the caption track: the chosen language, or the spoken one (auto-generated)."""
+    tracks = YouTubeTranscriptApi().list(video_id)
+    if language:
+        return tracks.find_transcript(preferred_languages(language, settings.transcript_languages))
+    generated = [t for t in tracks if t.is_generated]       # auto captions = spoken language
+    return generated[0] if generated else next(iter(tracks))
 
 def ingest_youtube(video_id: str, language: str | None = None) -> Transcript:
     settings = get_settings()
     info = fetch_video_info(video_id)
 
     languages = preferred_languages(language, settings.transcript_languages)
-    result = fetch_youtube_transcript(video_id, languages)
+    result = fetch_youtube_transcript(video_id, languages, auto=language is None)
     if result is not None:
         segments, language = result
         source = "youtube_transcript"

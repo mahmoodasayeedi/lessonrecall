@@ -31,10 +31,11 @@ public class MaterialController {
         return service.addYoutube(Long.valueOf(jwt.getSubject()), courseId, request.url(), request.language());
     }
 
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/upload")
     public MaterialResponse upload(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId,
-                                   @RequestParam("file") MultipartFile file) {
-        return service.upload(Long.valueOf(jwt.getSubject()), courseId, file);
+                                   @RequestParam("file") MultipartFile file,
+                                   @RequestParam(value = "language", required = false) String language) {   // ← NEW
+        return service.upload(Long.valueOf(jwt.getSubject()), courseId, file, language);                  // ← language added
     }
 
     @GetMapping

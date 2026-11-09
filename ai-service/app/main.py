@@ -74,7 +74,7 @@ def health() -> dict:
 def ingest_from_youtube(request: YouTubeIngestRequest) -> IngestResponse:
     """Paste a YouTube link. Uses YouTube's transcript when available, otherwise Whisper."""
     video_id = extract_youtube_id(request.url)
-    transcript = ingest_youtube(video_id)
+    transcript = ingest_youtube(video_id, request.language)        # ← language passed here
     return _build_response(transcript, request.course_id)
 
 
@@ -86,6 +86,7 @@ def ingest_from_upload(
     """Upload an MP4 / MP3 (max 25 MB). Transcribed with Whisper."""
     settings = get_settings()
     data = file.file.read()
+    language: str | None = Form(None)
     ext = validate_upload(file.filename, len(data), settings.max_upload_mb)
 
     with tempfile.TemporaryDirectory() as tmp:

@@ -37,10 +37,12 @@ public class AiClient {
                 .body(IngestResponse.class);
     }
 
-    public IngestResponse ingestUpload(MultipartFile file, String courseSlug) {
+    public IngestResponse ingestUpload(MultipartFile file, String courseSlug, String language) {
+        var body = multipart(file, courseSlug);                                   // the map with file + course_id
+        if (language != null && !language.isBlank()) body.add("language", language);
         return rest.post().uri("/ingest/upload")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(multipart(file, courseSlug))
+                .body(body)
                 .retrieve()
                 .body(IngestResponse.class);
     }

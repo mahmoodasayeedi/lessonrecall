@@ -46,7 +46,7 @@ class Chunk(BaseModel):
 
 class YouTubeIngestRequest(BaseModel):
     url: str = Field(..., examples=["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
-    language: str | None = Field(default=None, pattern=r"^[a-z]{2}$", examples=["en"])
+    language: str | None = Field(default=None, pattern="^[a-z]{2}$")
     course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$", examples=["neural-networks"])
 
 

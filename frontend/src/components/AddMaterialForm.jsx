@@ -6,7 +6,11 @@ export default function AddMaterialForm({ courseId, onAdded }) {
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState(null)        // { type: 'error' | 'ok', text }
-
+  const VIDEO_LANGUAGES = [
+  ['', 'Auto-detect'], ['en', 'English'], ['de', 'German'], ['es', 'Spanish'],
+  ['fr', 'French'], ['ar', 'Arabic'], ['ur', 'Urdu'], ['hi', 'Hindi'],
+]
+const [language, setLanguage] = useState('')
   async function run(request) {
     setBusy(true)
     setMessage(null)
@@ -25,7 +29,7 @@ export default function AddMaterialForm({ courseId, onAdded }) {
 
   function addYoutube(e) {
     e.preventDefault()
-    run(() => api(`/courses/${courseId}/materials/youtube`, { method: 'POST', body: { url } })).then(() => setUrl(''))
+    run(() => api(`/courses/${courseId}/materials/youtube`, { method: 'POST', body: { url, language: language || null } })).then(() => setUrl(''))
   }
 
   function upload(e) {
@@ -33,12 +37,18 @@ export default function AddMaterialForm({ courseId, onAdded }) {
     if (!file) return
     const form = new FormData()
     form.append('file', file)
+    if (language) form.append('language', language)
     run(() => api(`/courses/${courseId}/materials/upload`, { method: 'POST', form })).then(() => setFile(null))
   }
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <h2 style={{ fontSize: 20 }}>Add material</h2>
+      <label className="label">Language spoken in the video
+  <select className="input" value={language} onChange={(e) => setLanguage(e.target.value)}>
+    {VIDEO_LANGUAGES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+  </select>
+</label>
 
       <form onSubmit={addYoutube} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <label className="label" htmlFor="yt" style={{ width: '100%', marginBottom: 0 }}>YouTube link</label>

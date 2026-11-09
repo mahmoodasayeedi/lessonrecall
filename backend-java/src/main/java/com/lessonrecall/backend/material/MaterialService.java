@@ -48,17 +48,17 @@ public class MaterialService {
         }
     }
 
-    public MaterialResponse upload(Long userId, Long courseId, MultipartFile file) {
+    public MaterialResponse upload(Long userId, Long courseId, MultipartFile file, String language) {   // ← String language added
         Course course = courses.requireOwner(userId, courseId);
         String name = file.getOriginalFilename() == null ? "upload" : file.getOriginalFilename();
         boolean isPdf = name.toLowerCase().endsWith(".pdf");
         Material m = start(course, isPdf ? MaterialType.PDF : MaterialType.UPLOAD, name, null);
         try {
             if (isPdf) {
-                var result = ai.ingestPdf(file, course.getSlug());
+                var result = ai.ingestPdf(file, course.getSlug());                          // unchanged: PDFs have no spoken language
                 return finish(m, result.documentId(), result.title(), result.storedChunks(), null);
             }
-            var result = ai.ingestUpload(file, course.getSlug());
+            var result = ai.ingestUpload(file, course.getSlug(), language);                 // ← language added
             return finish(m, result.videoId(), result.title(), result.storedChunks(), result.durationSeconds());
         } catch (RuntimeException e) {
             return fail(m, e);
