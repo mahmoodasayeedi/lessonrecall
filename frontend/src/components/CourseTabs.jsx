@@ -1,8 +1,9 @@
 import AddMaterialForm from './AddMaterialForm'
 
-const TABS = ['Transcript', 'Chapters', 'Materials']
+const TABS = ['Transcript', 'Chapters', 'Quiz', 'Flashcards', 'Materials']
 
-export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, isOwner, courseId, onAdded, transcriptSlot }) {
+export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, isOwner, courseId, onAdded,
+                                     transcriptSlot, quizSlot, flashcardsSlot }) {
   return (
     <section className="card" style={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
       <div role="tablist" aria-label="Video tools" style={{ display: 'flex', gap: 18, padding: '0 20px', borderBottom: '1px solid var(--line)' }}>
@@ -18,7 +19,8 @@ export default function CourseTabs({ tab, setTab, chapters, onSeek, materials, i
 
       <div style={{ padding: 16, overflowY: 'auto', flex: 1 }}>
         {tab === 'Transcript' && transcriptSlot}
-
+        {tab === 'Quiz' && quizSlot}
+        {tab === 'Flashcards' && flashcardsSlot}
         {tab === 'Chapters' && (
           chapters.length === 0 ? <p className="muted">Loading chapters…</p> : (
             <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>

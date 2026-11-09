@@ -131,4 +131,14 @@ public class MaterialService {
         return new MaterialResponse(m.getId(), m.getType(), m.getTitle(), m.getSourceUrl(),
                 m.getStatus(), m.getErrorMessage(), m.getChunkCount(), m.getExternalId(), m.getDurationSeconds());
     }
+    public AiDtos.QuizResponse quiz(Long userId, Long courseId, Long materialId, int count) {
+        Course course = courses.requireAccess(userId, courseId);
+        Material m = materials.findByIdAndCourseId(materialId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+        if (m.getStatus() != MaterialStatus.READY || m.getType() == MaterialType.PDF) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quizzes are available for ready videos only");
+        }
+        return ai.quiz(course.getSlug(), m.getExternalId(), Math.max(1, Math.min(count, 10)));
+    }
+
 }

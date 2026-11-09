@@ -28,10 +28,11 @@ from app.models import ErrorResponse, IngestResponse, Transcript, YouTubeIngestR
 from app.rag.vector_store import upsert_chunks
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from app.rag.answer import answer_question
+from app.rag.quiz import generate_quiz
 from app.models import (
     AskRequest, AskResponse, ChatRequest, ChatResponse, ErrorResponse, IngestResponse,
     PdfIngestResponse, SummaryRequest, SummaryResponse, Transcript, TranscriptRequest,
-    TranscriptResponse, YouTubeIngestRequest,
+    TranscriptResponse, YouTubeIngestRequest, QuizRequest, QuizResponse,
 )
 from app.ingestion.pdf import pdf_to_chunks
 from app.ingestion.errors import FileTooLargeError, IngestionError, UnsupportedFileError,NotFoundError,UnauthorizedError
@@ -173,3 +174,11 @@ def transcript(request: TranscriptRequest) -> TranscriptResponse:
         sections=[{"start_seconds": int(c["start_seconds"]), "end_seconds": int(c["end_seconds"]), "text": c["text"]}
                   for c in chunks],
     )
+
+@app.post("/quiz", response_model=QuizResponse)
+def quiz(request: QuizRequest) -> QuizResponse:
+    """Multiple-choice quiz for one video; every question links to the minute where it is explained."""
+    questions = generate_quiz(request.course_id, request.video_id, request.number_of_questions)
+    if questions is None:
+        raise NotFoundError("No video with this ID in this course.")
+    return QuizResponse(video_id=request.video_id, questions=questions)

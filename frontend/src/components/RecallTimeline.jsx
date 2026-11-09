@@ -1,7 +1,7 @@
 const toSeconds = (t) => t.split(':').reduce((acc, part) => acc * 60 + Number(part), 0)   // "2:23" → 143
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-export default function RecallTimeline({ duration, chapters, pins, current, onSeek, loading }) {
+export default function RecallTimeline({ duration, chapters, pins, weak = [], current, onSeek, loading }) {
   if (!duration) return null
   const pct = (s) => `${Math.min(100, (s / duration) * 100)}%`
   const chapterStarts = chapters.map((c) => ({ ...c, start: toSeconds(c.timestamp) }))
@@ -13,6 +13,8 @@ export default function RecallTimeline({ duration, chapters, pins, current, onSe
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 12 }} className="muted">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--mint)' }} />Your questions</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 14, height: 10, borderRadius: 3, background: 'var(--rose-tint)', border: '1.5px solid var(--rose)' }} />Weak topic</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 14, height: 10, borderRadius: 3, background: '#E9E4F2' }} />Chapters</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -39,7 +41,11 @@ export default function RecallTimeline({ duration, chapters, pins, current, onSe
             </div>
           )
         })}
-
+        {weak.map((s) => (
+          <button key={`w${s}`} onClick={() => onSeek(s)} aria-label={`Weak topic at ${fmt(s)}, replay it`} title={`You missed a question here (${fmt(s)})`}
+            style={{ position: 'absolute', left: pct(s), width: `${(75 / duration) * 100}%`, top: 18, height: 20, padding: 0,
+                     borderRadius: 5, background: 'var(--rose-tint)', border: '1.5px solid var(--rose)', cursor: 'pointer' }} />
+        ))}
         {pins.map((s) => (
           <button key={s} onClick={() => onSeek(s)} aria-label={`Your question, answered at ${fmt(s)}`} title={`Answered at ${fmt(s)}`}
             style={{ position: 'absolute', left: `calc(${pct(s)} - 7px)`, top: 0, width: 14, height: 36, padding: 0,

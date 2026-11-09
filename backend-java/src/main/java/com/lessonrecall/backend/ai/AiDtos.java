@@ -62,4 +62,17 @@ public final class AiDtos {
     public record SummaryResponse(@JsonProperty("video_id") String videoId, String title, String summary,
                                   @JsonProperty("key_points") List<String> keyPoints,
                                   List<Chapter> chapters) {}
+    public record QuizRequest(@JsonProperty("course_id") String courseId,
+                              @JsonProperty("video_id") String videoId,
+                              @JsonProperty("number_of_questions") int numberOfQuestions) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record QuizQuestion(String question, List<String> options,
+                               @JsonProperty("correct_option") int correctOption,
+                               String explanation, String difficulty,
+                               @JsonProperty("start_seconds") int startSeconds,
+                               String timestamp, String url) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record QuizResponse(@JsonProperty("video_id") String videoId, List<QuizQuestion> questions) {}
 }

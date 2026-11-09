@@ -140,3 +140,24 @@ class TranscriptSection(BaseModel):
 class TranscriptResponse(BaseModel):
     video_id: str
     sections: list[TranscriptSection]
+
+class QuizRequest(BaseModel):
+    course_id: str = Field(default="demo", pattern=r"^[a-z0-9-]{1,64}$")
+    video_id: str
+    number_of_questions: int = Field(default=5, ge=1, le=10)
+
+
+class QuizQuestionOut(BaseModel):
+    question: str
+    options: list[str]
+    correct_option: int
+    explanation: str
+    difficulty: str
+    start_seconds: int
+    timestamp: str
+    url: str | None = None
+
+
+class QuizResponse(BaseModel):
+    video_id: str
+    questions: list[QuizQuestionOut]

@@ -8,6 +8,8 @@ import ChatPanel from '../components/ChatPanel'
 import CourseTabs from '../components/CourseTabs'
 import { citedMoments } from '../components/AnswerText'
 import TranscriptPanel from '../components/TranscriptPanel'
+import QuizPanel from '../components/QuizPanel'
+import FlashcardsPanel from '../components/FlashcardsPanel'
 
 const toSeconds = (t) => t.split(':').reduce((acc, p) => acc * 60 + Number(p), 0)
 
@@ -23,7 +25,10 @@ export default function CoursePage() {
   const [chatOpen, setChatOpen] = useState(true)
   const [tab, setTab] = useState('Transcript')
   const [error, setError] = useState('')
-
+  const [quizzes, setQuizzes] = useState({})          // cache: materialId → questions
+  const [quizLoading, setQuizLoading] = useState(false)
+  const [quizError, setQuizError] = useState('')
+  const [weakTopics, setWeakTopics] = useState([])
   const loadMaterials = useCallback(() => {
     api(`/courses/${id}/materials`).then((list) => {
       setMaterials(list)
@@ -34,6 +39,7 @@ export default function CoursePage() {
   useEffect(() => {
     setSelected(null)
     api(`/courses/${id}`).then(setCourse).catch((e) => setError(e.message))
+    api(`/courses/${id}/weak-topics`).then(setWeakTopics).catch(() => setWeakTopics([]))
     loadMaterials()
   }, [id, loadMaterials])
 
@@ -51,7 +57,35 @@ export default function CoursePage() {
     if (target && target.id !== selected?.id) setSelected(target)
     setSeek((s) => ({ start: Math.floor(seconds), key: s.key + 1 }))
   }
-
+  function generateQuiz() {
+    if (!selected) return
+    setQuizLoading(true)
+    setQuizError('')
+    api(`/courses/${id}/materials/${selected.id}/quiz?count=5`)
+      .then((q) => setQuizzes((all) => ({ ...all, [selected.id]: q.questions })))
+      .catch((e) => setQuizError(e.message))
+      .finally(() => setQuizLoading(false))
+  }
+    async function saveQuizResults(answers) {
+    try {
+      await api(`/courses/${id}/quiz-results`, {
+        method: 'POST',
+        body: {
+          results: answers.map((a) => ({
+            question: a.question.question,
+            correct: a.correct,
+            videoId: selected.externalId,
+            startSeconds: a.question.start_seconds,
+            timestamp: a.question.timestamp,
+            url: a.question.url,
+          })),
+        },
+      })
+      setWeakTopics(await api(`/courses/${id}/weak-topics`))
+    } catch (e) {
+      console.error('Could not save quiz results', e)
+    }
+  }
   function selectMaterial(m) {
     setSelected(m)
     setSeek({ start: 0, key: 0 })
@@ -65,15 +99,21 @@ export default function CoursePage() {
     .flatMap((m) => citedMoments(m.content))
     .filter((c) => c.videoId === selected?.externalId)
     .map((c) => c.seconds))]
-
+  const weakZones = [...new Set(weakTopics.filter((w) => w.videoId === selected?.externalId).map((w) => w.startSeconds))]
   const tabs = (
     <CourseTabs tab={tab} setTab={setTab}
       chapters={chapters[selected?.id] || []}
       onSeek={(t) => playAt(toSeconds(t), selected.externalId)}
       materials={materials} isOwner={isOwner} courseId={id} onAdded={loadMaterials}
       transcriptSlot={<TranscriptPanel courseId={id} material={selected} pins={pins} current={seek.start}
-                                       onSeek={(s) => playAt(s, selected.externalId)} />} />
-  )
+                                       onSeek={(s) => playAt(s, selected.externalId)} />} 
+    
+     quizSlot={<QuizPanel key={`quiz-${selected?.id}-${quizzes[selected?.id]?.[0]?.question}`}
+                           quiz={quizzes[selected?.id]} loading={quizLoading} error={quizError}
+                           onGenerate={generateQuiz} onSeek={(s) => playAt(s, selected.externalId)} onFinish={saveQuizResults} />}
+      flashcardsSlot={<FlashcardsPanel key={`cards-${selected?.id}`}
+                                       quiz={quizzes[selected?.id]} loading={quizLoading}
+                                       onGenerate={generateQuiz} onSeek={(s) => playAt(s, selected.externalId)} />} /> )
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -98,7 +138,7 @@ export default function CoursePage() {
             <YouTubePlayer videoId={selected?.type === 'YOUTUBE' ? selected.externalId : null}
                            start={seek.start} seekKey={seek.key} title={selected?.title} />
             <RecallTimeline duration={selected?.durationSeconds} chapters={chapters[selected?.id] || []}
-                            pins={pins} current={seek.start} loading={loadingChapters}
+                            pins={pins} weak={weakZones} current={seek.start} loading={loadingChapters}
                             onSeek={(s) => playAt(s, selected.externalId)} />
             {chatOpen && <div style={{ flex: 1, minHeight: 320 }}>{tabs}</div>}
           </div>

@@ -1,6 +1,7 @@
 package com.lessonrecall.backend.ai;
 
 import com.lessonrecall.backend.ai.AiDtos.*;
+import com.lessonrecall.backend.material.Material;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class AiClient {
@@ -79,5 +81,12 @@ public class AiClient {
                 .body(new TranscriptRequest(courseSlug, videoId))
                 .retrieve()
                 .body(TranscriptResponse.class);
+    }
+    public QuizResponse quiz(String courseSlug, String videoId, int count) {
+        return rest.post().uri("/quiz")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new QuizRequest(courseSlug, videoId, count))
+                .retrieve()
+                .body(QuizResponse.class);
     }
 }

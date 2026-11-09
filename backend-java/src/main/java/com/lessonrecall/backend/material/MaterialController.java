@@ -51,4 +51,9 @@ public class MaterialController {
                                                 @PathVariable Long materialId) {
         return service.transcript(Long.valueOf(jwt.getSubject()), courseId, materialId);
     }
+    @GetMapping("/{materialId}/quiz")
+    public AiDtos.QuizResponse quiz(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId,
+                                    @PathVariable Long materialId, @RequestParam(defaultValue = "5") int count) {
+        return service.quiz(Long.valueOf(jwt.getSubject()), courseId, materialId, count);
+    }
 }

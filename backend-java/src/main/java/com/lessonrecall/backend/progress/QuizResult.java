@@ -13,6 +13,8 @@ import java.time.Instant;
 @Entity
 @Getter @Setter @NoArgsConstructor
 public class QuizResult {
+    private String videoId;          // externalId of the video
+    private Integer startSeconds;    // where the answer is explained
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
