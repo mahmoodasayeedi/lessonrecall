@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+
 import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import YouTubePlayer from '../components/YouTubePlayer'
@@ -12,15 +12,18 @@ import QuizPanel from '../components/QuizPanel'
 import FlashcardsPanel from '../components/FlashcardsPanel'
 import AddMaterialForm from '../components/AddMaterialForm'
 import { toast } from '../components/toast'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 const toSeconds = (t) => t.split(':').reduce((acc, p) => acc * 60 + Number(p), 0)
 
 export default function CoursePage() {
   const { id } = useParams()
+  const [searchParams] = useSearchParams()
+  const [seek, setSeek] = useState({ start: Number(searchParams.get('t')) || 0, key: 0 })
   const [course, setCourse] = useState(null)
   const [materials, setMaterials] = useState([])
   const [selected, setSelected] = useState(null)
-  const [seek, setSeek] = useState({ start: 0, key: 0 })
+  
   const [chatMessages, setChatMessages] = useState([])
   const [chapters, setChapters] = useState({})
   const [loadingChapters, setLoadingChapters] = useState(false)
@@ -33,13 +36,16 @@ export default function CoursePage() {
   const [weakTopics, setWeakTopics] = useState([])
   const [materialsLoaded, setMaterialsLoaded] = useState(false)
 
-  const loadMaterials = useCallback(() => {
-    api(`/courses/${id}/materials`).then((list) => {
-      setMaterials(list)
-      setMaterialsLoaded(true)
-      setSelected((cur) => cur ?? list.find((m) => m.type === 'YOUTUBE' && m.status === 'READY') ?? null)
-    }).catch((e) => setError(e.message))
-  }, [id])
+const loadMaterials = useCallback(() => {
+  api(`/courses/${id}/materials`).then((list) => {
+    setMaterials(list)
+    setMaterialsLoaded(true)
+    setSelected((cur) => cur
+      ?? list.find((m) => String(m.id) === searchParams.get('m'))
+      ?? list.find((m) => m.type === 'YOUTUBE' && m.status === 'READY')
+      ?? null)
+  }).catch((e) => setError(e.message))
+}, [id, searchParams])        // ← searchParams added here
 
   useEffect(() => {
     setSelected(null)
@@ -47,6 +53,17 @@ export default function CoursePage() {
     api(`/courses/${id}/weak-topics`).then(setWeakTopics).catch(() => setWeakTopics([]))
     loadMaterials()
   }, [id, loadMaterials])
+
+  useEffect(() => {
+  if (!course || !selected) return
+  try {
+    localStorage.setItem('lr_last', JSON.stringify({
+      courseId: id, courseTitle: course.title,
+      materialId: selected.id, materialTitle: selected.title,
+      seconds: seek.start, at: Date.now(),
+    }))
+  } catch { /* storage not available: ignore */ }
+}, [id, course, selected, seek.start])
 
   useEffect(() => {
     if (!selected || selected.type !== 'YOUTUBE' || chapters[selected.id]) return

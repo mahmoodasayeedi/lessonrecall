@@ -4,6 +4,7 @@ import { api } from '../api'
 import { useAuth } from '../auth/AuthContext'
 import Header from '../components/Header'
 import CourseCard from '../components/CourseCard'
+import ContinueCard from '../components/ContinueCard'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -39,6 +40,7 @@ useEffect(() => { loadCourses() }, [loadCourses])
       <Header />
       <div style={{ padding: '24px 0 16px' }}>
         <div className="muted" style={{ fontSize: 14 }}>Welcome back, {user.name}</div>
+        <ContinueCard />
         <h1 style={{ fontSize: 34, marginTop: 4 }}>My courses</h1>
       </div>
 
