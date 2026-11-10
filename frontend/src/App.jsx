@@ -8,7 +8,7 @@ import RequireAuth from './auth/RequireAuth'
 import SettingsPage from './pages/SettingsPage'
 import Toaster from './components/Toaster'
 import FinalQuizPage from './pages/FinalQuizPage'
-
+import LandingPage from './pages/LandingPage'
 function Placeholder({ title }) {
   return (
     <div className="page">
@@ -23,7 +23,7 @@ export default function App() {
     <>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/home" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
       <Route path="/catalog" element={<RequireAuth><CatalogPage /></RequireAuth>} />
       <Route path="/courses/:id" element={<RequireAuth><CoursePage /></RequireAuth>} />

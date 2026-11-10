@@ -11,8 +11,9 @@ export default function ContinueCard() {
     <Link to={`/courses/${last.courseId}?m=${last.materialId}&t=${last.seconds}`}
           className="card"
           style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit',
-                   borderLeft: '4px solid var(--mint)', borderRadius: 0, marginBottom: 20 }}>
-      <img src="/avatar.png" alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover' }} />
+                   border: '1px solid var(--line)', borderLeft: '4px solid var(--mint)', borderRadius: 16, marginBottom: 20 }}>
+     <span aria-hidden="true" style={{ width: 46, height: 46, borderRadius: '50%', display: 'grid', placeItems: 'center',
+                                  flexShrink: 0, background: 'var(--mint-tint)', color: 'var(--mint)', fontSize: 18 }}>▶</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="muted" style={{ fontSize: 13 }}>Continue where you left off · {last.courseTitle}</div>
         <div style={{ fontWeight: 600, fontSize: 17, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
