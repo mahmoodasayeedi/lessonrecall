@@ -19,6 +19,8 @@ from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 from app.agent.agent import chat
 from app.config import get_settings
+from app.rag.course_quiz import generate_course_quiz
+from app.models import CourseQuizRequest  
 from app.ingestion import whisper_transcriber
 from app.ingestion.chunker import chunk_transcript
 from app.ingestion.errors import IngestionError
@@ -195,3 +197,9 @@ def delete_course(course_id: str):
 @app.delete("/courses/{course_id}/documents/{doc_id}")
 def delete_document(course_id: str, doc_id: str):
     return {"deleted": delete_document_vectors(course_id, doc_id)}
+
+@app.post("/course-quiz", responses=ERROR_RESPONSES)
+def course_quiz(request: CourseQuizRequest):
+    """Final quiz across all materials of a course (with correct answers: Spring Boot keeps them secret)."""
+    return {"questions": generate_course_quiz(request.course_id, request.document_ids,
+                                              request.number_of_questions)}

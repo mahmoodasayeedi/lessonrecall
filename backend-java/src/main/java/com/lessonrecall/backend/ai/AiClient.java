@@ -11,7 +11,9 @@ import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.lessonrecall.backend.ai.AiDtos.CourseQuizRequest;
+import com.lessonrecall.backend.ai.AiDtos.CourseQuizResponse;
+import java.util.List;
 @Component
 public class AiClient {
 
@@ -100,4 +102,13 @@ public class AiClient {
         rest.delete().uri("/courses/{c}/documents/{d}", courseSlug, externalId)
                 .retrieve().toBodilessEntity();
     }
+
+    public CourseQuizResponse courseQuiz(String slug, List<String> documentIds, int count) {
+        return rest.post().uri("/course-quiz")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new CourseQuizRequest(slug, documentIds, count))
+                .retrieve()
+                .body(CourseQuizResponse.class);
+    }
+
 }

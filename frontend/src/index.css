@@ -174,3 +174,22 @@ a {
 .listening {
   animation: listen-ring 1s ease-out infinite;
 }
+.btn-primary {
+  /* keep your existing properties */
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.22);
+  transition: transform .08s, box-shadow .08s;
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
+.input {
+  border-radius: 12px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px var(--mint-tint);
+}

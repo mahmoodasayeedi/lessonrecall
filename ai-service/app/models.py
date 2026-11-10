@@ -162,3 +162,8 @@ class QuizQuestionOut(BaseModel):
 class QuizResponse(BaseModel):
     video_id: str
     questions: list[QuizQuestionOut]
+
+class CourseQuizRequest(BaseModel):
+    course_id: str = Field(pattern=r"^[a-z0-9-]{1,64}$")
+    document_ids: list[str]                         # externalIds of the READY materials
+    number_of_questions: int = Field(default=10, ge=3, le=20)

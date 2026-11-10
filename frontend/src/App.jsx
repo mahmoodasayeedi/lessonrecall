@@ -7,6 +7,7 @@ import CoursePage from './pages/CoursePage'
 import RequireAuth from './auth/RequireAuth'
 import SettingsPage from './pages/SettingsPage'
 import Toaster from './components/Toaster'
+import FinalQuizPage from './pages/FinalQuizPage'
 
 function Placeholder({ title }) {
   return (
@@ -28,6 +29,7 @@ export default function App() {
       <Route path="/courses/:id" element={<RequireAuth><CoursePage /></RequireAuth>} />
       <Route path="*" element={<Placeholder title="Page not found" />} />
       <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+      <Route path="/courses/:id/final-quiz" element={<RequireAuth><FinalQuizPage /></RequireAuth>} />
     </Routes>
     <Toaster />
     </>

@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.lessonrecall.backend.finalquiz.FinalQuizAttemptRepository;
+import com.lessonrecall.backend.finalquiz.FinalQuizRepository;
+
 @Service
 @Transactional
 public class CourseService {
@@ -35,11 +38,13 @@ public class CourseService {
     private final ChatSessionRepository chatSessions;
     private final ChatMessageRepository chatMessages;
     private final AiClient ai;
+    private final FinalQuizRepository finalQuizzes;
+    private final FinalQuizAttemptRepository finalQuizAttempts;
 
     public CourseService(CourseRepository courses, EnrollmentRepository enrollments, UserRepository users,
                          MaterialRepository materials, QuizResultRepository quizResults,
                          ChatSessionRepository chatSessions, ChatMessageRepository chatMessages,
-                         AiClient ai) {
+                         AiClient ai,FinalQuizRepository finalQuizzes,FinalQuizAttemptRepository finalQuizAttempts) {
         this.courses = courses;
         this.enrollments = enrollments;
         this.users = users;
@@ -48,6 +53,8 @@ public class CourseService {
         this.chatSessions = chatSessions;
         this.chatMessages = chatMessages;
         this.ai = ai;
+        this.finalQuizzes = finalQuizzes;                                     // 3. assignments
+        this.finalQuizAttempts = finalQuizAttempts;
     }
     public CourseResponse create(Long userId, CreateCourseRequest request) {
         User user = users.findById(userId)
@@ -172,6 +179,10 @@ public class CourseService {
         quizResults.deleteByCourseId(courseId);
         materials.deleteByCourseId(courseId);
         enrollments.deleteByCourseId(courseId);
+        finalQuizzes.findByCourseId(courseId).ifPresent(q -> {
+            finalQuizAttempts.deleteByQuizId(q.getId());
+            finalQuizzes.delete(q);
+        });
         courses.delete(course);
         try {
             ai.deleteCourse(course.getSlug());

@@ -12,7 +12,8 @@ import QuizPanel from '../components/QuizPanel'
 import FlashcardsPanel from '../components/FlashcardsPanel'
 import AddMaterialForm from '../components/AddMaterialForm'
 import { toast } from '../components/toast'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link,useParams, useSearchParams } from 'react-router-dom'
+
 
 const toSeconds = (t) => t.split(':').reduce((acc, p) => acc * 60 + Number(p), 0)
 
@@ -184,9 +185,12 @@ const loadMaterials = useCallback(() => {
             </div>
             <h1 style={{ fontSize: 26, marginTop: 2 }}>{selected?.title || course.title}</h1>
           </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+        <Link className="btn" to={`/courses/${id}/final-quiz`}>🏁 Final quiz</Link>
           <button className="btn" onClick={() => setChatOpen((o) => !o)} aria-pressed={!chatOpen}>
             {chatOpen ? 'Hide chat' : 'Show chat'}
           </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'stretch', flex: 1 }}>
