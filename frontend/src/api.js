@@ -1,5 +1,6 @@
 // One place for all calls to Spring Boot. The token is added automatically.
 const TOKEN_KEY = 'lr_token'
+const BASE = import.meta.env.VITE_API_URL || ''
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (t) => (t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY))
@@ -10,7 +11,7 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   if (token) headers.Authorization = `Bearer ${token}`
   if (body) headers['Content-Type'] = 'application/json'
 
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${BASE}/api${path}`, {
     method,
     headers,
     body: form ?? (body ? JSON.stringify(body) : undefined),   // form = FormData for file uploads
