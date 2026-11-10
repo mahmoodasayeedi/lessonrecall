@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import UserMenu from './UserMenu'
 
 export default function Header() {
   const linkStyle = ({ isActive }) => ({
@@ -21,9 +22,8 @@ export default function Header() {
       </nav>
     {user && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
-          <span className="muted">{user.name} · {user.role === 'INSTRUCTOR' ? 'Instructor' : 'Learner'}</span>
-          <button className="btn" onClick={logout}>Log out</button>
-        </div>
+            <UserMenu />
+          </div>
       )}
     </header>
   )

@@ -16,7 +16,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String avatar;      // e.g. "owl"; null = show initials
     @Column(nullable = false)
     private String name;
 

@@ -1,10 +1,7 @@
 package com.lessonrecall.backend.auth;
 
 import com.lessonrecall.backend.user.Role;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 public final class AuthDtos {
     public record LanguageRequest(@Size(max = 30) String language) {}
@@ -16,6 +13,8 @@ public final class AuthDtos {
             @NotNull Role role) {}
 
     public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {}
+    public record AvatarRequest(@Pattern(regexp = "^[a-z]{0,20}$") String avatar) {}
+    public record AvatarResponse(String avatar) {}
 
     public record AuthResponse(String token, Long userId, String name, String email, Role role) {}
 

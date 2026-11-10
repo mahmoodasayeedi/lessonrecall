@@ -96,4 +96,20 @@ public class AuthController {
         users.save(user);
         return new LanguageResponse(lang);
     }
+
+    @GetMapping("/avatar")
+    public AvatarResponse getAvatar(@AuthenticationPrincipal Jwt jwt) {
+        User user = users.findById(Long.parseLong(jwt.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        return new AvatarResponse(user.getAvatar());
+    }
+
+    @PutMapping("/avatar")
+    public AvatarResponse setAvatar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AvatarRequest req) {
+        User user = users.findById(Long.parseLong(jwt.getSubject()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        user.setAvatar(req.avatar() == null || req.avatar().isBlank() ? null : req.avatar());
+        users.save(user);
+        return new AvatarResponse(user.getAvatar());
+    }
 }
