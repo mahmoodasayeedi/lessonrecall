@@ -1,72 +1,97 @@
 # LessonRecall
 
-An AI study assistant for course videos: ask questions and get answers with links to the exact minute, see your questions pinned on a Recall timeline, and (next) practise with quizzes and flashcards.
+**Ask your course. Get the exact minute.**
 
-_Status: in development. Ironhack AI Engineering Bootcamp final project (2026)._
+LessonRecall is an AI study assistant for course videos and slides. Learners ask questions by text or voice, in any language, and get answers that come **only** from the course material. Every answer links to the **exact minute** of the video or the **page** of the PDF where it was explained.
 
-## What works today
+Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedi
 
-| Feature                                                                                            | Status           |
-| -------------------------------------------------------------------------------------------------- | ---------------- |
-| Speech pipeline: YouTube transcript, fallback to yt-dlp + Whisper                                  | ✅ Built         |
-| MP4/MP3 upload (Whisper) and PDF/slides (one chunk per page)                                       | ✅ Built         |
-| Input validation with clear errors (broken links, no speech, wrong or too-large files)             | ✅ Built         |
-| Pinecone vector store, one namespace per course                                                    | ✅ Built         |
-| Answers grounded in the course, citing the exact minute or PDF page                                | ✅ Built         |
-| Answer Guard: says "not covered" instead of guessing                                               | ✅ Built         |
-| Deterministic timestamps: time labels recalculated from the source link in code                    | ✅ Built         |
-| Summaries with timestamped chapters                                                                | ✅ Built         |
-| LangGraph agent with tools (video search, course search, quiz generator, study planner) and memory | ✅ Built         |
-| LangSmith tracing                                                                                  | ✅ Built         |
-| Spring Boot backend: JWT login, roles (learner/instructor), class and private courses, enrollment  | ✅ Built         |
-| Materials through Spring with status tracking (processing / ready / failed)                        | ✅ Built         |
-| Chat sessions with history saved in PostgreSQL                                                     | ✅ Built         |
-| React frontend: login, my courses, catalog, course page                                            | ✅ Built         |
-| **Recall timeline**: chapters and answer pins under the video                                      | ✅ Built         |
-| Transcript tab with clickable timestamps, "Ask next" suggestions, hide-chat layout                 | ✅ Built         |
-| Quizzes and flashcards linked to the video minute                                                  | 🔄 Next          |
-| Weak topics and "Replay my gaps"                                                                   | ⏳ Planned       |
-| LangSmith evaluation (~30 questions)                                                               | ⏳ Planned       |
-| Deployment (Vercel + Render)                                                                       | ⏳ Planned       |
-| Instructor class insights, coding version check                                                    | 🎯 Stretch goals |
+**Live app:** https://lessonrecall.vercel.app
+
+> Free hosting: after 15 minutes without traffic the servers sleep. The first request can take 2–3 minutes while they wake up.
+
+---
+
+## Features
+
+### Built
+
+| Area                                | What it does                                                                                                                                                                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Speech pipeline**                 | YouTube captions via `youtube-transcript-api`; if there are none, audio download with `yt-dlp` + **OpenAI Whisper** transcription. Also MP4/MP3/M4A/WAV uploads (Whisper) and PDF slides (one chunk per page). Video language can be chosen or auto-detected |
+| **RAG with minute-exact citations** | ~75 s chunks with 10 s overlap, OpenAI embeddings, **Pinecone** with one namespace per course. Citations are rebuilt deterministically from the timestamp, so links never point to an invented minute                                                        |
+| **Answer Guard**                    | Relevance threshold + prompt rules: if the course doesn't cover a question, LessonRecall says so instead of making something up                                                                                                                              |
+| **LangGraph agent**                 | Tools: `video_search`, `course_search`, `video_summary`, `quiz_generator`, `study_planner`; conversation memory per chat thread; follow-up suggestions                                                                                                       |
+| **Recall timeline**                 | Chapters, pins for every question asked, and rose **weak-topic zones** from missed quiz questions; click to replay                                                                                                                                           |
+| **Practice**                        | Quiz and flashcards per video, with a link back to the moment each answer is explained                                                                                                                                                                       |
+| **Final course quiz**               | Instructor generates a quiz across all materials, reviews it, sets a pass mark and publishes it. Learners get one attempt; grading happens on the server; class results for the instructor                                                                   |
+| **Languages & voice**               | Answer language per user (7 languages), voice input (browser speech recognition), read-aloud answers with a speaking avatar                                                                                                                                  |
+| **Roles**                           | Instructors create class courses; learners join from the catalog or create private courses. Owners can edit/delete; learners can leave                                                                                                                       |
+| **Evaluation**                      | LangSmith tracing and an evaluation set (see below)                                                                                                                                                                                                          |
+
+### Planned (stretch goals)
+
+- Residential proxy so YouTube videos can be ingested directly from the cloud (see _Known limitation_)
+- Streaming answers (Server-Sent Events through Spring Boot)
+- Instructor dashboard with class insights (weakest topics across learners)
+- Version check for coding courses
+- Live lip-synced avatar, natural TTS voice, Whisper for voice questions
+- Google login, dark mode
+
+---
 
 ## Architecture
 
 ```
-React (Vite) ──► Spring Boot API ──► FastAPI AI service ──► Pinecone · OpenAI
-                 JWT, roles,          only callable with        LangSmith (tracing)
-                 PostgreSQL           X-Internal-Token
+            ┌────────────────────┐
+ Browser ──►│  React (Vite)       │  Vercel
+            └─────────┬──────────┘
+                      │ REST + JWT
+            ┌─────────▼──────────┐       ┌──────────────────┐
+            │  Spring Boot 4      │──────►│  PostgreSQL 17    │  Render
+            │  Java 21            │       └──────────────────┘
+            │  auth · roles · data│
+            └─────────┬──────────┘
+                      │ REST + internal token
+            ┌─────────▼──────────┐       ┌──────────────────────────────┐
+            │  FastAPI (Python)   │──────►│ OpenAI (GPT, embeddings,     │
+            │  LangChain/LangGraph│       │ Whisper) · Pinecone · LangSmith│
+            └────────────────────┘       └──────────────────────────────┘
 ```
 
-- **Spring Boot** handles users, roles, courses, materials, chat history and progress. React only talks to Spring Boot.
-- **FastAPI** handles ingestion, retrieval, summaries and the LangGraph agent. It only accepts requests carrying the internal token, so the AI service and the API keys stay private.
+### Why two backends?
 
-## Project structure
+- **Spring Boot** owns everything that is about _users and data_: JWT authentication, roles (learner / instructor), courses, enrollments, materials, chats, quiz results and the final quiz. Grading happens here, so learners never receive the answers in advance.
+- **FastAPI** owns everything that is about _AI_: ingestion, transcription, embeddings, retrieval, the LangGraph agent and quiz generation. The Python ecosystem (LangChain, LangGraph, Whisper, yt-dlp, Pinecone SDK) is first-class there.
+- **React only talks to Spring Boot.** FastAPI is protected with an internal token and is never called by the browser directly.
 
-| Folder               | What it is                                                          |
-| -------------------- | ------------------------------------------------------------------- |
-| `ai-service/`        | Python FastAPI: ingestion, retrieval, summaries, agent              |
-| `backend-java/`      | Spring Boot 4 API (Java 21): auth, roles, courses, materials, chats |
-| `frontend/`          | React (Vite) app                                                    |
-| `docker-compose.yml` | PostgreSQL for local development                                    |
+---
 
 ## Tech stack
 
-| Layer                | Technology                                                     |
-| -------------------- | -------------------------------------------------------------- |
-| Frontend             | React 19, Vite, React Router                                   |
-| Backend              | Java 21, Spring Boot 4, Spring Security (JWT), Spring Data JPA |
-| Database             | PostgreSQL 17 (Docker)                                         |
-| AI service           | Python, FastAPI, LangChain, LangGraph                          |
-| Speech recognition   | YouTube transcripts, Whisper (fallback and uploads)            |
-| Embeddings / LLM     | OpenAI text-embedding-3-small, GPT-4o-mini                     |
-| Vector database      | Pinecone                                                       |
-| Tracing / evaluation | LangSmith                                                      |
-| Deployment (planned) | Vercel (frontend), Render (backend + AI service)               |
+**Frontend:** React 19, Vite, React Router · **Backend:** Spring Boot 4.1, Java 21, Spring Security (OAuth2 resource server, JWT HS256), Spring Data JPA, PostgreSQL · **AI service:** Python, FastAPI, LangChain, LangGraph, OpenAI (GPT-4o-mini, text-embedding-3-small, Whisper), Pinecone, LangSmith, youtube-transcript-api, yt-dlp, pypdf · **Deployment:** Docker, Render, Vercel
 
-## Getting started
+---
 
-Start the four parts in this order.
+## Project structure
+
+```
+lessonrecall/
+├── ai-service/        FastAPI: ingestion, RAG, agent, quizzes   (Dockerfile)
+│   ├── app/ingestion/ YouTube, Whisper, PDF, chunking
+│   ├── app/rag/       embeddings, Pinecone, answers, summaries, quizzes
+│   ├── app/agent/     LangGraph agent and tools
+│   └── tests/
+├── backend-java/      Spring Boot API                            (Dockerfile)
+├── frontend/          React app                                  (vercel.json)
+└── docker-compose.yml local PostgreSQL
+```
+
+---
+
+## Run locally
+
+**Prerequisites:** Docker Desktop, Python 3.12+, Java 21, Node.js 20+, API keys for OpenAI, Pinecone and LangSmith.
 
 **1. Database**
 
@@ -74,70 +99,98 @@ Start the four parts in this order.
 docker compose up -d
 ```
 
-**2. AI service** (port 8000)
+**2. AI service**
 
 ```bash
 cd ai-service
-python -m venv .venv
-.venv\Scripts\activate          # Mac/Linux: source .venv/bin/activate
+python -m venv .venv && .venv\Scripts\activate      # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # add your API keys
-python -m uvicorn app.main:app --reload --port 8000
+cp .env.example .env                                 # then fill in your keys
+python -m uvicorn app.main:app --reload              # http://127.0.0.1:8000/docs
 ```
 
-**3. Backend** (port 8080)
+**3. Backend**
 
 ```bash
 cd backend-java
-.\mvnw.cmd spring-boot:run      # Mac/Linux: ./mvnw spring-boot:run
+./mvnw spring-boot:run                               # http://localhost:8080
 ```
 
-**4. Frontend** (port 5173)
+**4. Frontend**
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev                                          # http://localhost:5173
 ```
 
-Open http://localhost:5173
+---
 
 ## Configuration
 
-| Where             | Variable                                                  | Purpose                                                 |
-| ----------------- | --------------------------------------------------------- | ------------------------------------------------------- |
-| `ai-service/.env` | `OPENAI_API_KEY`, `PINECONE_API_KEY`, `LANGSMITH_API_KEY` | AI services                                             |
-| `ai-service/.env` | `INTERNAL_API_TOKEN`                                      | Shared secret: only the backend may call the AI service |
-| Backend (env var) | `AI_SERVICE_TOKEN`                                        | Must match `INTERNAL_API_TOKEN`                         |
-| Backend (env var) | `JWT_SECRET`                                              | Signs login tokens (long random value in production)    |
+All values have local defaults; in production they are set as environment variables on Render/Vercel (never committed).
 
-`.env` files are never committed. See `ai-service/.env.example` for the full list.
+| Service    | Variable                                                      | Purpose                                                 |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| AI service | `OPENAI_API_KEY`, `PINECONE_API_KEY`, `PINECONE_INDEX`        | AI and vector store                                     |
+|            | `EMBEDDING_MODEL`, `CHAT_MODEL`                               | Model choice                                            |
+|            | `LANGSMITH_API_KEY`, `LANGSMITH_TRACING`, `LANGSMITH_PROJECT` | Tracing and evaluation                                  |
+|            | `INTERNAL_API_TOKEN`                                          | Only Spring Boot may call the AI service                |
+| Backend    | `DB_URL`, `DB_USER`, `DB_PASSWORD`                            | PostgreSQL (JDBC URL)                                   |
+|            | `AI_SERVICE_URL`, `AI_SERVICE_TOKEN`                          | AI service address and the same internal token          |
+|            | `JWT_SECRET`                                                  | Signs login tokens                                      |
+|            | `CORS_ORIGINS`                                                | Allowed frontend addresses                              |
+|            | `PORT`, `SHOW_SQL`                                            | Set by Render / logging                                 |
+| Frontend   | `VITE_API_URL`                                                | Backend address (empty locally: the Vite proxy is used) |
 
-## API overview (Spring Boot, all JWT-protected except auth)
+---
 
-```
-POST /api/auth/register · POST /api/auth/login · GET /api/auth/me
-POST /api/courses · GET /api/courses/mine · GET /api/courses/catalog · POST /api/courses/{id}/join
-POST /api/courses/{id}/materials/youtube · POST /api/courses/{id}/materials/upload · GET /api/courses/{id}/materials
-GET  /api/courses/{id}/materials/{mid}/summary · GET /api/courses/{id}/materials/{mid}/transcript
-POST /api/courses/{id}/ask
-POST /api/courses/{id}/chats · GET /api/courses/{id}/chats · POST /api/chats/{sid}/messages · GET /api/chats/{sid}/messages
-```
+## Deployment
 
-## Demo course
+| Part        | Platform            | Notes                                                              |
+| ----------- | ------------------- | ------------------------------------------------------------------ |
+| Frontend    | **Vercel**          | Root `frontend`, `vercel.json` rewrites all routes to `index.html` |
+| Spring Boot | **Render** (Docker) | Two-stage build: Maven → Java 21 JRE                               |
+| FastAPI     | **Render** (Docker) | Python 3.12 slim + ffmpeg, health check `/health`                  |
+| Database    | **Render Postgres** | Same region (Frankfurt) as the services                            |
 
-3Blue1Brown, _Neural Networks_ (4 videos, English) plus the written lesson as PDF.
+Production uses its own Pinecone index (`lessonrecall-prod`), so local and live data never mix.
 
-## Evaluation (planned)
+### Known limitation: YouTube from the cloud
 
-A fixed demo course with ~30 hand-written questions, measured in LangSmith:
+YouTube blocks requests from cloud server IPs, both for captions and for audio downloads. On the live app, the demo course was therefore ingested from a trusted machine directly into the production database and vector index. Chat, quizzes and everything else run fully in the cloud. **Planned fix:** a residential proxy for `youtube-transcript-api` and `yt-dlp`.
 
-| Metric                | What it measures                         |
-| --------------------- | ---------------------------------------- |
-| Answer accuracy       | Is the answer correct?                   |
-| Retrieval hit rate    | Was the right chunk retrieved?           |
-| Timestamp correctness | Does the link point to the right minute? |
-| Latency               | How long until the answer appears?       |
+---
+
+## Evaluation (LangSmith)
+
+A set of ~30 real questions about the demo course, measuring:
+
+| Metric                        | Result          |
+| ----------------------------- | --------------- |
+| Answer accuracy               | _[to be added]_ |
+| Retrieval hit rate            | _[to be added]_ |
+| Timestamp correctness (±10 s) | _[to be added]_ |
+| Average latency               | _[to be added]_ |
+
+---
+
+## API overview (Spring Boot)
+
+| Area       | Endpoints                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Auth       | `POST /api/auth/register`, `/login`, `GET /me`, `PUT /password`, `GET/PUT /language`, `GET/PUT /avatar`                           |
+| Courses    | `GET/POST /api/courses`, `/mine`, `/catalog`, `POST /{id}/join`, `PUT/DELETE /{id}`, `DELETE /{id}/enrollment`                    |
+| Materials  | `POST /api/courses/{id}/materials/youtube`, `/upload`, `GET` list, `DELETE /{mid}`, `GET /{mid}/summary`, `/transcript`, `/quiz`  |
+| Chat       | `GET/POST /api/courses/{id}/chats`, `GET/POST /api/chats/{sid}/messages`                                                          |
+| Progress   | `POST /api/courses/{id}/quiz-results`, `GET /weak-topics`                                                                         |
+| Final quiz | `GET /api/courses/{id}/final-quiz`, `POST /generate`, `DELETE /questions/{qid}`, `POST /publish`, `POST /attempt`, `GET /results` |
+
+---
+
+## Demo content
+
+The demo course uses the public _Neural Networks_ series by 3Blue1Brown on YouTube, used for educational demonstration only.
 
 ## Data and privacy
 
