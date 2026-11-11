@@ -2,11 +2,21 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth/AuthContext'
+import { AvatarCircle } from './avatars'
 
 export default function Sidebar({ courseId, materials = [], selectedId, onSelect }) {
   const { user, logout } = useAuth()
   const [courses, setCourses] = useState([])
   const [search, setSearch] = useState('')
+
+  const [avatar, setAvatar] = useState(null)
+
+  useEffect(() => {
+    api('/auth/avatar').then((r) => setAvatar(r.avatar)).catch(() => {})
+    const onChange = (e) => setAvatar(e.detail)
+    window.addEventListener('lr-avatar', onChange)
+    return () => window.removeEventListener('lr-avatar', onChange)
+  }, [])
 
   useEffect(() => {
     api('/courses/mine').then(setCourses).catch(() => setCourses([]))
@@ -68,10 +78,7 @@ export default function Sidebar({ courseId, materials = [], selectedId, onSelect
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--ink)', color: '#fff', fontSize: 13,
-                         fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-            {user.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-          </span>
+                    <AvatarCircle avatarId={avatar} name={user.name} size={36} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
             <div className="muted" style={{ fontSize: 12 }}>{user.role === 'INSTRUCTOR' ? 'Instructor' : 'Learner'}</div>

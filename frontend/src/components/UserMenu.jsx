@@ -35,13 +35,18 @@ export default function UserMenu() {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-     <button onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label="Account menu"
-        style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer', borderRadius: '50%' }}>
-  <AvatarCircle avatarId={avatar} name={user.name} size={40} />
-</button>
+        <button onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} aria-label="Account menu"
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: 0, border: 'none',
+                 background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <AvatarCircle avatarId={avatar} name={user.name} size={40} />
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)', maxWidth: 80, overflow: 'hidden',
+                       textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {user.name.split(' ')[0]}
+        </span>
+      </button>
 
       {open && (
-        <div role="menu" style={{ position: 'absolute', right: 0, top: 48, width: 260, zIndex: 50, padding: 6,
+        <div role="menu" style={{ position: 'absolute', right: 0, top: '100%', width: 260, zIndex: 50,marginTop: 8, padding: 6,
                                   background: '#fff', border: '1px solid var(--line)', borderRadius: 16,
                                   boxShadow: '0 12px 32px rgba(42, 27, 74, 0.15)' }}>
           <div style={{ padding: '10px 14px 12px', borderBottom: '1px solid var(--line)', marginBottom: 6 }}>

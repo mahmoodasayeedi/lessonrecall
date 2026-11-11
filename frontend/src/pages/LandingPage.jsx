@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Orbs, Tilt } from '../components/Scene3D'
+import TutorIntro from '../components/TutorIntro'
 
 const serif = { fontFamily: 'Newsreader, Georgia, serif', fontWeight: 600 }
 const wrap = { maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px, 3vw, 32px)' }
@@ -79,6 +80,7 @@ export default function LandingPage() {
             <Link to="/login" style={{ ...btnGhost, padding: '15px 26px', fontSize: 17, borderRadius: 14 }}>Log in</Link>
           </div>
           <div className="muted" style={{ fontSize: 14 }}>Free for your class · No credit card needed</div>
+          <TutorIntro />
         </div>
 
         <div style={{ position: 'relative', display: 'grid', justifyItems: 'center', padding: '40px 0' }}>
