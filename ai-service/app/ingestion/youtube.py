@@ -3,12 +3,10 @@
 Step 1: try YouTube's own transcript (fast, free, has timestamps).
 Step 2: if there is none, download the audio with yt-dlp and transcribe it with Whisper.
 """
-from youtube_transcript_api.proxies import WebshareProxyConfig
-from app.config import get_settings          # only if it's not imported yet
 import logging
 import tempfile
 from pathlib import Path
-from youtube_transcript_api.proxies import WebshareProxyConfig
+
 import requests
 import yt_dlp
 from youtube_transcript_api import (
@@ -18,6 +16,7 @@ from youtube_transcript_api import (
     VideoUnavailable,
     YouTubeTranscriptApi,
 )
+from youtube_transcript_api.proxies import WebshareProxyConfig
 
 from app.config import get_settings
 from app.ingestion import whisper_transcriber
@@ -31,38 +30,48 @@ def watch_url(video_id: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}"
 
 
-
-def transcript_api() -> YouTubeTranscriptApi:
-    """Use the residential proxy when configured (deployment), else a direct connection (local)."""
+def proxy_dict() -> dict | None:
+    """The proxy as a requests-style dict when configured (Render), otherwise None (laptop)."""
     s = get_settings()
-    if s.webshare_proxy_username:
-        return YouTubeTranscriptApi(proxy_config=WebshareProxyConfig(
+    if s.webshare_proxy_username and s.webshare_proxy_password:
+        return WebshareProxyConfig(
             proxy_username=s.webshare_proxy_username,
             proxy_password=s.webshare_proxy_password,
-        ))
-    return YouTubeTranscriptApi()
+        ).to_requests_dict()
+    return None
 
-
-def ytdlp_proxy() -> dict:
-    """The same proxy for yt-dlp (title lookup and audio download)."""
-    s = get_settings()
-    if s.webshare_proxy_username:
-        return {"proxy": f"http://{s.webshare_proxy_username}-rotate:{s.webshare_proxy_password}@p.webshare.io:80"}
-    return {}
 
 def fetch_video_info(video_id: str) -> dict:
-    """Get title and duration without downloading. Also tells us if the video exists."""
-    opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+    """Title via YouTube oEmbed (works through the proxy on the server); duration via yt-dlp only locally."""
+    proxies = proxy_dict()
+
+    # 1. Title: oEmbed returns a tiny JSON with the title
+    title = video_id
     try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(watch_url(video_id), download=False)
-        return {"title": info.get("title") or video_id, "duration": info.get("duration")}
-    except yt_dlp.utils.DownloadError as e:
-        msg = str(e).lower()
-        if any(word in msg for word in ("unavailable", "private", "removed", "does not exist", "not available")):
-            raise VideoUnavailableError("This video is private, removed or doesn't exist.") from e
-        log.warning("Could not read video info for %s: %s", video_id, e)
-        return {"title": video_id, "duration": None}
+        r = requests.get("https://www.youtube.com/oembed",
+                         params={"url": watch_url(video_id), "format": "json"},
+                         proxies=proxies, timeout=20)
+        if r.status_code == 404:
+            raise VideoUnavailableError("This video is private, removed or doesn't exist.")
+        if r.ok:
+            title = r.json().get("title") or video_id
+        else:
+            log.warning("oEmbed returned %s for %s", r.status_code, video_id)
+    except requests.RequestException as e:
+        log.warning("Could not read the title of %s: %s", video_id, e)
+
+    # 2. Duration: yt-dlp works from a home connection; on the server YouTube blocks it, so we skip it there
+    duration = None
+    if proxies is None:
+        try:
+            opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                duration = ydl.extract_info(watch_url(video_id), download=False).get("duration")
+        except yt_dlp.utils.DownloadError as e:
+            log.warning("Could not read the duration of %s: %s", video_id, e)
+
+    return {"title": title, "duration": duration}
+
 
 def transcript_api() -> YouTubeTranscriptApi:
     """Captions through the residential proxy when it's configured (Render), otherwise direct (laptop)."""
@@ -76,6 +85,7 @@ def transcript_api() -> YouTubeTranscriptApi:
         ))
     return YouTubeTranscriptApi()
 
+
 def fetch_youtube_transcript(video_id: str, languages: list[str], auto: bool = False
                              ) -> tuple[list[TranscriptSegment], str] | None:
     """Return (segments, language_code), or None if the video has no transcript.
@@ -83,17 +93,17 @@ def fetch_youtube_transcript(video_id: str, languages: list[str], auto: bool = F
     auto=True: no language chosen, so take YouTube's auto-generated captions,
     which are always in the language actually spoken in the video.
     """
-    api = transcript_api()                                            # ← proxy or direct
+    api = transcript_api()
     try:
         if auto:
-            tracks = list(api.list(video_id))                         # ← uses api
+            tracks = list(api.list(video_id))
             if not tracks:
                 return None
             generated = [t for t in tracks if t.is_generated]
             track = generated[0] if generated else tracks[0]
             fetched = track.fetch()
         else:
-            fetched = api.fetch(video_id, languages=languages)        # ← uses api
+            fetched = api.fetch(video_id, languages=languages)
     except VideoUnavailable as e:
         raise VideoUnavailableError("This video is private, removed or doesn't exist.") from e
     except (TranscriptsDisabled, NoTranscriptFound):
@@ -133,13 +143,6 @@ def preferred_languages(language: str | None, defaults: list[str]) -> list[str]:
     ordered = ([language] if language else []) + defaults
     return list(dict.fromkeys(ordered))
 
-def pick_transcript(video_id: str, language: str | None):
-    """Choose the caption track: the chosen language, or the spoken one (auto-generated)."""
-    tracks = YouTubeTranscriptApi().list(video_id)
-    if language:
-        return tracks.find_transcript(preferred_languages(language, settings.transcript_languages))
-    generated = [t for t in tracks if t.is_generated]       # auto captions = spoken language
-    return generated[0] if generated else next(iter(tracks))
 
 def ingest_youtube(video_id: str, language: str | None = None) -> Transcript:
     settings = get_settings()
