@@ -162,7 +162,9 @@ YouTube blocks requests from cloud server IPs, both for captions and for audio d
 
 ---
 
-## Evaluation (LangSmith)
+### Evaluation
+
+                      | LangSmith evaluation with 30 questions and 5 metrics; results are public on the [Evaluation page](https://lessonrecall.vercel.app/evaluation) |
 
 A set of ~30 real questions about the demo course, measuring:
 
