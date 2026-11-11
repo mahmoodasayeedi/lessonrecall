@@ -3,6 +3,8 @@
 Step 1: try YouTube's own transcript (fast, free, has timestamps).
 Step 2: if there is none, download the audio with yt-dlp and transcribe it with Whisper.
 """
+from youtube_transcript_api.proxies import WebshareProxyConfig
+from app.config import get_settings          # only if it's not imported yet
 import logging
 import tempfile
 from pathlib import Path
@@ -62,6 +64,17 @@ def fetch_video_info(video_id: str) -> dict:
         log.warning("Could not read video info for %s: %s", video_id, e)
         return {"title": video_id, "duration": None}
 
+def transcript_api() -> YouTubeTranscriptApi:
+    """Captions through the residential proxy when it's configured (Render), otherwise direct (laptop)."""
+    s = get_settings()
+    if s.webshare_proxy_username and s.webshare_proxy_password:
+        log.info("Fetching captions through the Webshare residential proxy")
+        return YouTubeTranscriptApi(proxy_config=WebshareProxyConfig(
+            proxy_username=s.webshare_proxy_username,
+            proxy_password=s.webshare_proxy_password,
+            retries_when_blocked=5,
+        ))
+    return YouTubeTranscriptApi()
 
 def fetch_youtube_transcript(video_id: str, languages: list[str], auto: bool = False
                              ) -> tuple[list[TranscriptSegment], str] | None:
@@ -70,22 +83,22 @@ def fetch_youtube_transcript(video_id: str, languages: list[str], auto: bool = F
     auto=True: no language chosen, so take YouTube's auto-generated captions,
     which are always in the language actually spoken in the video.
     """
+    api = transcript_api()                                            # ← proxy or direct
     try:
         if auto:
-            tracks = list(YouTubeTranscriptApi().list(video_id))
+            tracks = list(api.list(video_id))                         # ← uses api
             if not tracks:
                 return None
-            generated = [t for t in tracks if t.is_generated]          # spoken language
+            generated = [t for t in tracks if t.is_generated]
             track = generated[0] if generated else tracks[0]
             fetched = track.fetch()
         else:
-            fetched = YouTubeTranscriptApi().fetch(video_id, languages=languages)
+            fetched = api.fetch(video_id, languages=languages)        # ← uses api
     except VideoUnavailable as e:
         raise VideoUnavailableError("This video is private, removed or doesn't exist.") from e
     except (TranscriptsDisabled, NoTranscriptFound):
         return None
     except CouldNotRetrieveTranscript as e:
-        # e.g. YouTube blocking the request; we fall back to Whisper
         log.warning("Transcript fetch failed for %s: %s", video_id, type(e).__name__)
         return None
     except requests.exceptions.RequestException as e:
