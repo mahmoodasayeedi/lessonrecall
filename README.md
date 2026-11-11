@@ -180,14 +180,6 @@ YouTube blocks requests from cloud server IPs. The AI service therefore fetches 
 
 The first run showed only 58 % retrieval hits. The misses revealed a real bug: the agent sometimes merged two citations in one bracket, which also made them unclickable in the app. After fixing `fix_citations` and the prompt, the hit rate rose to 85 %.
 
------------------------------ | --------------- |
-| Answer accuracy | _[to be added]_ |
-| Retrieval hit rate | _[to be added]_ |
-| Timestamp correctness (±10 s) | _[to be added]_ |
-| Average latency | _[to be added]_ |
-
----
-
 ## API overview (Spring Boot)
 
 | Area       | Endpoints                                                                                                                         |
