@@ -20,7 +20,7 @@ export default function TutorIntro() {
         <img src="/tutor-closeup.png" alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover',
                                                      border: '2px solid var(--mint)' }} />
         ▶ Meet your tutor
-        <span className="muted" style={{ fontWeight: 400, fontSize: 14 }}>35 s</span>
+        <span className="muted" style={{ fontWeight: 400, fontSize: 14 }}>19 s</span>
       </button>
 
       {open && (
