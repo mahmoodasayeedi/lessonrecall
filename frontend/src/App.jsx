@@ -9,6 +9,8 @@ import SettingsPage from './pages/SettingsPage'
 import Toaster from './components/Toaster'
 import FinalQuizPage from './pages/FinalQuizPage'
 import LandingPage from './pages/LandingPage'
+import EvaluationPage from './pages/EvaluationPage'
+
 function Placeholder({ title }) {
   return (
     <div className="page">
@@ -30,6 +32,7 @@ export default function App() {
       <Route path="*" element={<Placeholder title="Page not found" />} />
       <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
       <Route path="/courses/:id/final-quiz" element={<RequireAuth><FinalQuizPage /></RequireAuth>} />
+      <Route path="/evaluation" element={<EvaluationPage />} />
     </Routes>
     <Toaster />
     </>

@@ -1,0 +1,668 @@
+{
+  "summary": {
+    "questions": 30,
+    "accuracy": 97,
+    "retrieval_hit_rate": 85,
+    "timestamp_correct": 73,
+    "latency_median": 5.2,
+    "latency_p90": 6.8,
+    "experiment": "lessonrecall-ef892524",
+    "date": "2026-11-11",
+    "grounded_rate": 96
+  },
+  "rows": [
+    {
+      "question": "How do you write a for loop in Java?",
+      "course": "java-course",
+      "expected": "NOT_COVERED",
+      "expected_video": null,
+      "expected_seconds": null,
+      "answer": "The course material does not cover how to write a for loop in Java. Would you like to ask about something else?",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "Guard: said not covered",
+      "retrieval_hit": null,
+      "timestamp_ok": null,
+      "latency": 6.12,
+      "grounded": null
+    },
+    {
+      "question": "How accurate is the network on images it has never seen?",
+      "course": "neural-networks",
+      "expected": "About 96% correct, and up to 98% with some tweaks to the hidden layers.",
+      "expected_video": "IHZwWFHWa-w",
+      "expected_seconds": 753,
+      "answer": "The accuracy of the network on images it has never seen before can be quite impressive. For a basic network structure described, it classifies about 96% of new images correctly. With some adjustments to the hidden layer structure, this accuracy can be improved to around 98%. While this performance is not the absolute best possible, it is notable given the complexity of the task (13:43, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=823s) (12:33, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=753s).",
+      "citations": [
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 823
+        },
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 753
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately reflects the key points about the accuracy percentages and potential improvements.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 6.77,
+      "grounded": 1
+    },
+    {
+      "question": "How many hidden layers does the example network have?",
+      "course": "neural-networks",
+      "expected": "Two hidden layers with 16 neurons each, which is a somewhat arbitrary choice.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 212,
+      "answer": "The example network has 2 hidden layers, each with 16 neurons (page 9) (1:09, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=69s) (11:36, https://www.youtube.com/watch?v=aircAruvnKk&t=696s).",
+      "citations": [
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 69
+        },
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 696
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer confirms the number of hidden layers and neurons, aligning with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 0,
+      "latency": 4.83,
+      "grounded": 1
+    },
+    {
+      "question": "What is the derivative of the cost with respect to the last activation?",
+      "course": "neural-networks",
+      "expected": "2 times (a(L) minus y), so it is proportional to the difference between the output and the desired value.",
+      "expected_video": "tIeHLnjs5U8",
+      "expected_seconds": 208,
+      "answer": "The derivative of the cost with respect to the last activation can be expressed in terms of the cost function and the activation values. Specifically, if we denote the activation of the last neuron as \\( a^{(L)} \\) and the desired output for a training example as \\( y \\), the cost for that example can be represented as \\( C = (a^{(L)} - y)^2 \\). The derivative of the cost with respect to the last activation is then given by:\n\n\\[\n\\frac{\\partial C}{\\partial a^{(L)}} = 2(a^{(L)} - y)\n\\]\n\nThis derivative indicates how sensitive the cost is to changes in the last activation. \n\nFor more details, you can refer to the explanation in the video at (1:05, https://www.youtube.com/watch?v=tIeHLnjs5U8&t=65s) and (8:04, https://www.youtube.com/watch?v=tIeHLnjs5U8&t=484s).",
+      "citations": [
+        {
+          "video_id": "tIeHLnjs5U8",
+          "seconds": 65
+        },
+        {
+          "video_id": "tIeHLnjs5U8",
+          "seconds": 484
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer correctly states that the derivative is proportional to the difference between the output and the desired value.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 0,
+      "latency": 6.86,
+      "grounded": 1
+    },
+    {
+      "question": "What is a platform in computing?",
+      "course": "java-course",
+      "expected": "The combination of operating system and processor, for example Windows plus Intel (Wintel).",
+      "expected_video": "2Xa3Y4xz8_s",
+      "expected_seconds": 204,
+      "answer": "In computing, a platform refers to the combination of hardware and software that allows applications to run. For example, the combination of an operating system and a processor is considered a platform. A common example is the \"Wintel\" platform, which consists of Windows operating system running on Intel processors (3:24, https://www.youtube.com/watch?v=2Xa3Y4xz8_s&t=204s). Additionally, Java is described as both a programming language and a platform because it allows code to run on various devices that support the Java Virtual Machine (4:32, https://www.youtube.com/watch?v=2Xa3Y4xz8_s&t=272s).",
+      "citations": [
+        {
+          "video_id": "2Xa3Y4xz8_s",
+          "seconds": 204
+        },
+        {
+          "video_id": "2Xa3Y4xz8_s",
+          "seconds": 272
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer includes the key point about the combination of operating system and processor as a platform, specifically mentioning the Wintel example.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.01,
+      "grounded": 1
+    },
+    {
+      "question": "What is backpropagation?",
+      "course": "neural-networks",
+      "expected": "The algorithm for computing the gradient of the cost function, i.e. how each training example wants to nudge the weights and biases.",
+      "expected_video": "Ilg3gGewQ5U",
+      "expected_seconds": 75,
+      "answer": "Backpropagation is the core algorithm that enables neural networks to learn. It determines how to adjust the weights and biases of the network based on the error of its predictions. Specifically, backpropagation calculates the gradient of the cost function with respect to each weight by applying the chain rule of calculus. This process helps minimize the cost function by repeatedly adjusting the weights in the direction that reduces the error.\n\nThe algorithm works by processing training examples in mini-batches, which allows for a computationally efficient approximation of the gradient, rather than calculating it for the entire dataset at once. This method is known as stochastic gradient descent. Over time, as the network processes these mini-batches and makes adjustments, it converges towards a local minimum of the cost function, improving its performance on the training examples (10:25, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=625s) (9:13, https://www.youtube.com/watch?v=tIeHLnjs5U8&t=553s).",
+      "citations": [
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 625
+        },
+        {
+          "video_id": "tIeHLnjs5U8",
+          "seconds": 553
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the algorithm for computing the gradient of the cost function and how it adjusts weights and biases.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 0,
+      "latency": 6.45,
+      "grounded": 1
+    },
+    {
+      "question": "How many neurons does the output layer have?",
+      "course": "neural-networks",
+      "expected": "10, one for each digit.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 212,
+      "answer": "The output layer of the network has 10 neurons. Each neuron corresponds to a particular digit that the image could contain (page 8).",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "The tutor's answer correctly states that there are 10 neurons, each corresponding to a digit, which aligns with the reference answer.",
+      "retrieval_hit": 0,
+      "timestamp_ok": 0,
+      "latency": 3.5,
+      "grounded": 1
+    },
+    {
+      "question": "Why is Java both a language and a platform?",
+      "course": "java-course",
+      "expected": "Code compiled once to byte code runs on all platforms with a JVM, including PCs and mobile devices.",
+      "expected_video": "2Xa3Y4xz8_s",
+      "expected_seconds": 341,
+      "answer": "Java is considered both a language and a platform due to its unique architecture and functionality. \n\n1. **Java as a Language**: Java is a programming language that allows developers to write code using its syntax and features. When Java code is compiled, it is transformed into an intermediate form known as bytecode, which is not specific to any one platform (2:32, URL).\n\n2. **Java as a Platform**: The Java platform refers to the Java Runtime Environment (JRE) and the Java Virtual Machine (JVM). The JVM interprets the bytecode and converts it into native machine code that can run on any device that has the JVM installed. This means that Java applications can run on various platforms (like Windows, macOS, Linux, etc.) without needing to be rewritten for each one (5:41, URL).\n\nThus, Java's \"write once, run anywhere\" capability is what makes it both a language and a platform (2:16, URL).",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "The tutor's answer explains that Java code compiles to bytecode which runs on any platform with a JVM, aligning with the reference answer.",
+      "retrieval_hit": 0,
+      "timestamp_ok": 0,
+      "latency": 4.07,
+      "grounded": 0
+    },
+    {
+      "question": "How is the cost of a single training example calculated?",
+      "course": "neural-networks",
+      "expected": "Add up the squares of the differences between the output activations and the values you want them to have.",
+      "expected_video": "IHZwWFHWa-w",
+      "expected_seconds": 207,
+      "answer": "The cost of a single training example is calculated by defining a cost function that measures how far the network's output is from the desired output. Specifically, it involves summing the squares of the differences between the actual output activations and the target values. This means that if the network confidently classifies the input correctly, the cost will be small, while it will be large if the network's output is far from the expected result. The formula for the cost of a single training example can be expressed as \\( C_0 = (a^{(L)} - y)^2 \\), where \\( a^{(L)} \\) is the activation of the output neuron and \\( y \\) is the target value (0 or 1) (3:27, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=207s) (1:05, https://www.youtube.com/watch?v=tIeHLnjs5U8&t=65s).",
+      "citations": [
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 207
+        },
+        {
+          "video_id": "tIeHLnjs5U8",
+          "seconds": 65
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the process of calculating the cost by summing the squares of the differences between actual and desired outputs.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.21,
+      "grounded": 1
+    },
+    {
+      "question": "How many neurons are in the input layer and why?",
+      "course": "neural-networks",
+      "expected": "784, one for each pixel of the 28x28 input image.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 143,
+      "answer": "The input layer contains 784 neurons. This number corresponds to the 784 pixels in a standard 28x28 pixel image, which is commonly used in digit recognition tasks. Each neuron in the input layer represents one pixel from the image, allowing the network to process the visual information effectively (3:32, https://www.youtube.com/watch?v=aircAruvnKk&t=212s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 212
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately states that the input layer contains 784 neurons, corresponding to the 784 pixels in a 28x28 image.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.15,
+      "grounded": 1
+    },
+    {
+      "question": "What is ReLU and why is it used instead of sigmoid?",
+      "course": "neural-networks",
+      "expected": "Rectified linear unit: max(0, a). It is much easier to train, especially for very deep networks.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 1043,
+      "answer": "ReLU, or Rectified Linear Unit, is an activation function used in neural networks. It is defined as \\( f(x) = \\max(0, x) \\), meaning that it outputs the input directly if it is positive; otherwise, it outputs zero. This function is motivated by a biological analogy of how neurons activate, where a neuron is either inactive or active based on whether the input exceeds a certain threshold (17:23, https://www.youtube.com/watch?v=aircAruvnKk&t=1043s).\n\nReLU is preferred over the sigmoid function for several reasons:\n1. **Training Efficiency**: ReLU is easier to train compared to sigmoid functions, especially in deep networks. Sigmoid functions can lead to issues like vanishing gradients, making it difficult for the network to learn (17:23, https://www.youtube.com/watch?v=aircAruvnKk&t=1043s).\n2. **Non-linearity**: While both functions introduce non-linearity, ReLU allows for a wider range of outputs, which can help in learning complex patterns in data (17:23, https://www.youtube.com/watch?v=aircAruvnKk&t=1043s).\n3. **Sparsity**: ReLU can produce sparse activations, meaning that many neurons can be inactive (outputting zero), which can lead to more efficient models (17:23, https://www.youtube.com/watch?v=aircAruvnKk&t=1043s).\n\nOverall, these characteristics make ReLU a popular choice in modern neural network architectures.",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 1043
+        },
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 1043
+        },
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 1043
+        },
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 1043
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes ReLU and its advantages, aligning with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 8.8,
+      "grounded": 1
+    },
+    {
+      "question": "How many weights and biases does the network have in total?",
+      "course": "neural-networks",
+      "expected": "Almost exactly 13,000.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 696,
+      "answer": "The network has a total of 13,002 weights and biases (page 23) (11:36, https://www.youtube.com/watch?v=aircAruvnKk&t=696s) (1:09, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=69s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 696
+        },
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 69
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer states a total of 13,002, which is close to the reference answer of almost 13,000.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.77,
+      "grounded": 1
+    },
+    {
+      "question": "What is a convolutional neural network?",
+      "course": "neural-networks",
+      "expected": "NOT_COVERED",
+      "expected_video": null,
+      "expected_seconds": null,
+      "answer": "The course material does not provide a specific definition of a convolutional neural network (CNN). It mentions that there are many variants of neural networks, including CNNs, but does not elaborate on their characteristics or functions. \n\nIf you would like to explore more about convolutional neural networks, I suggest switching to \"Whole course\" to search all the course materials.",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "Guard: said not covered",
+      "retrieval_hit": null,
+      "timestamp_ok": null,
+      "latency": 2.75,
+      "grounded": null
+    },
+    {
+      "question": "What is the Java Virtual Machine?",
+      "course": "java-course",
+      "expected": "A virtual platform in RAM that takes the byte code and converts it into the native machine code of the platform it runs on.",
+      "expected_video": "2Xa3Y4xz8_s",
+      "expected_seconds": 272,
+      "answer": "The Java Virtual Machine (JVM) is a crucial component of the Java platform that allows Java code to run on any device or operating system that supports it. When Java code is compiled, it is transformed into an intermediate form known as bytecode, which is not specific to any platform. The JVM resides in the RAM of your operating system and is responsible for interpreting this bytecode and converting it into native machine code that the specific platform can execute. This capability makes Java a versatile language, as it can run on various devices, including PCs and mobile gadgets, without needing separate compilers for each platform (5:41, https://www.youtube.com/watch?v=2Xa3Y4xz8_s&t=341s) (4:32, https://www.youtube.com/watch?v=2Xa3Y4xz8_s&t=272s).",
+      "citations": [
+        {
+          "video_id": "2Xa3Y4xz8_s",
+          "seconds": 341
+        },
+        {
+          "video_id": "2Xa3Y4xz8_s",
+          "seconds": 272
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the JVM's role in converting bytecode to native machine code, aligning with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 6.35,
+      "grounded": 1
+    },
+    {
+      "question": "Wie viele Neuronen hat die Eingabeschicht?",
+      "course": "neural-networks",
+      "expected": "784, eines pro Pixel des 28x28-Bildes.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 143,
+      "answer": "Die Eingabeschicht hat 784 Neuronen, die jeweils einem der 28x28 Pixel eines Eingabebildes entsprechen. Jedes Neuron hält eine Zahl, die den Grauwert des entsprechenden Pixels repräsentiert, wobei die Werte von 0 (schwarz) bis 1 (weiß) reichen (2:23, https://www.youtube.com/watch?v=aircAruvnKk&t=143s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 143
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately states that there are 784 neurons corresponding to the 28x28 pixels, which aligns with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.24,
+      "grounded": 1
+    },
+    {
+      "question": "What is the sigmoid function used for?",
+      "course": "neural-networks",
+      "expected": "It squishes the weighted sum into the range between 0 and 1 (also called a logistic curve).",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 624,
+      "answer": "The sigmoid function is used to squish the real number line into the range between 0 and 1. This is particularly useful in neural networks, where it serves as an activation function. Very negative inputs result in outputs close to 0, while very positive inputs yield outputs close to 1. The sigmoid function helps measure how positive the weighted sum of inputs is, effectively determining the activation level of a neuron (page 21) (10:24, https://www.youtube.com/watch?v=aircAruvnKk&t=624s). \n\nAdditionally, it can incorporate a bias to adjust the threshold at which the neuron activates, allowing for more nuanced control over when a neuron becomes active (17:23, https://www.youtube.com/watch?v=aircAruvnKk&t=1043s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 624
+        },
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 1043
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the sigmoid function's role in squishing values into the range between 0 and 1, aligning with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.81,
+      "grounded": 1
+    },
+    {
+      "question": "What is the bias of a neuron?",
+      "course": "neural-networks",
+      "expected": "A number added to the weighted sum before the sigmoid; it sets how high the weighted sum must be before the neuron becomes meaningfully active.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 624,
+      "answer": "The bias of a neuron is an additional number added to the weighted sum of inputs before applying the activation function. It allows the neuron to be inactive until the weighted sum exceeds a certain threshold. For example, if you want the neuron to activate only when the sum is greater than 10, you would add a bias of -10 to the weighted sum. This means the bias helps determine how high the weighted sum needs to be for the neuron to become meaningfully active (10:24, https://www.youtube.com/watch?v=aircAruvnKk&t=624s) (page 22).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 624
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the bias as an additional number that influences when the neuron becomes active, aligning with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.77,
+      "grounded": 1
+    },
+    {
+      "question": "What is object-oriented programming?",
+      "course": "java-course",
+      "expected": "Combining data and the actions on that data; it brings abstraction, encapsulation, inheritance and polymorphism.",
+      "expected_video": "pBlH24tFRQk",
+      "expected_seconds": 68,
+      "answer": "Object-oriented programming (OOP) is a programming paradigm that combines data and actions to create software applications. It emerged as a response to the limitations of structured programming, where code repetition was common and inefficient. In OOP, data and the operations that can be performed on that data are encapsulated together, leading to several advantages, including abstraction, encapsulation, inheritance, and polymorphism (1:08, https://www.youtube.com/watch?v=pBlH24tFRQk&t=68s) (2:15, https://www.youtube.com/watch?v=pBlH24tFRQk&t=135s).\n\nFor example, in a banking application, OOP allows for the creation of classes that represent accounts, with methods for depositing and withdrawing funds, thus avoiding repetitive code and enhancing security through encapsulation (0:00, https://www.youtube.com/watch?v=pBlH24tFRQk&t=0s) (0:02, https://www.youtube.com/watch?v=szYzBC89CPE&t=2s).",
+      "citations": [
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 68
+        },
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 135
+        },
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 0
+        },
+        {
+          "video_id": "szYzBC89CPE",
+          "seconds": 2
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer includes the key points of combining data and actions, and mentions abstraction, encapsulation, inheritance, and polymorphism.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.84,
+      "grounded": 1
+    },
+    {
+      "question": "Do the hidden layers really detect edges and loops?",
+      "course": "neural-networks",
+      "expected": "No. The weights look almost random; the network found a local minimum that classifies well but does not pick up the hoped-for patterns.",
+      "expected_video": "IHZwWFHWa-w",
+      "expected_seconds": 823,
+      "answer": "Yes, hidden layers in neural networks are designed to detect edges and loops. The neurons in these layers respond to various features of the input images. For instance, the second layer might correspond to specific little edges, while the third layer could recognize larger patterns like loops and long lines. This hierarchical structure allows the network to break down complex images into simpler components, which is essential for tasks like image recognition (page 12) (6:59, https://www.youtube.com/watch?v=aircAruvnKk&t=419s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 419
+        }
+      ],
+      "accuracy": 0,
+      "judge": "The tutor's answer contradicts the reference answer by suggesting that the network picks up patterns, while the reference states it does not.",
+      "retrieval_hit": 0,
+      "timestamp_ok": 0,
+      "latency": 5.35,
+      "grounded": 1
+    },
+    {
+      "question": "Was ist Kapselung in Java?",
+      "course": "java-course",
+      "expected": "Variablen sind privat und nur über Methoden erreichbar, die Eingaben prüfen; der Code ist wie eine Kapsel.",
+      "expected_video": "szYzBC89CPE",
+      "expected_seconds": 2,
+      "answer": "Kapselung in Java bezieht sich auf das Konzept, dass die Variablen einer Klasse privat sind und nur über entsprechende Methoden (Getter und Setter) zugänglich gemacht werden. Dies schützt die Daten vor unbefugtem Zugriff und Manipulation von außen. Ein Beispiel ist, wenn ein Hacker versucht, einen ungültigen Betrag auf ein Konto einzuzahlen. Da die Variablen privat sind und die Methoden Überprüfungen durchführen, wird der Zugriff verweigert, was die Anwendung sicherer macht. Man kann sich den gesamten Code wie eine Kapsel vorstellen, mit der man nur über definierte Nachrichten kommunizieren kann (0:02, https://www.youtube.com/watch?v=szYzBC89CPE&t=2s).",
+      "citations": [
+        {
+          "video_id": "szYzBC89CPE",
+          "seconds": 2
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes encapsulation, emphasizing private variables and method access, aligning with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.78,
+      "grounded": 1
+    },
+    {
+      "question": "How does the attention mechanism in transformers work?",
+      "course": "neural-networks",
+      "expected": "NOT_COVERED",
+      "expected_video": null,
+      "expected_seconds": null,
+      "answer": "The course material does not cover the attention mechanism in transformers specifically. You might want to switch to \"Whole course\" to search all the course materials for more information.",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "Guard: said not covered",
+      "retrieval_hit": null,
+      "timestamp_ok": null,
+      "latency": 5.04,
+      "grounded": null
+    },
+    {
+      "question": "What is gradient descent?",
+      "course": "neural-networks",
+      "expected": "Repeatedly nudging the inputs of a function by a multiple of the negative gradient to move towards a local minimum of the cost function.",
+      "expected_video": "IHZwWFHWa-w",
+      "expected_seconds": 551,
+      "answer": "Gradient descent is a method used to minimize a cost function in machine learning and neural networks. It involves repeatedly adjusting the weights and biases of the model by taking small steps in the direction of the negative gradient of the cost function. This process helps the model converge towards a local minimum, which represents better performance on the training data.\n\nThe key points about gradient descent include:\n\n1. It nudges the input of a function based on the negative gradient, which indicates the direction to decrease the cost function (10:17, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=617s).\n2. The relative magnitudes of the gradient components inform which adjustments to the weights will have the most significant impact on reducing the cost (10:17, https://www.youtube.com/watch?v=IHZwWFHWa-w&t=617s).\n3. In practice, due to computational constraints, the data is often divided into mini-batches, and the gradient descent step is computed for each mini-batch, leading to a method known as stochastic gradient descent (10:25, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=625s).",
+      "citations": [
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 617
+        },
+        {
+          "video_id": "IHZwWFHWa-w",
+          "seconds": 617
+        },
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 625
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the process of nudging inputs by the negative gradient to minimize the cost function.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 6.61,
+      "grounded": 1
+    },
+    {
+      "question": "What problem did structured programming solve?",
+      "course": "java-course",
+      "expected": "Repeated code was put into functions or methods that are called wherever needed, instead of writing it again and again.",
+      "expected_video": "pBlH24tFRQk",
+      "expected_seconds": 68,
+      "answer": "Structured programming addressed several key problems in software development:\n\n1. **Code Repetition**: In unstructured programming, common lines of code were often repeated throughout the program, leading to inefficiencies and increased chances of errors. Structured programming introduced the use of functions or methods to encapsulate common code, allowing for reuse and reducing redundancy (1:08, https://www.youtube.com/watch?v=pBlH24tFRQk&t=68s).\n\n2. **Increased Coding Errors**: The repetition of code not only wasted programming efforts but also heightened the risk of coding errors. By organizing code into structured formats, programmers could minimize these risks (1:08, https://www.youtube.com/watch?v=pBlH24tFRQk&t=68s).\n\n3. **Improved Program Organization**: Structured programming promotes a clearer organization of code, making it easier to understand and maintain. This approach helps in managing complex programs by breaking them down into smaller, manageable sections (1:08, https://www.youtube.com/watch?v=pBlH24tFRQk&t=68s).\n\nThese improvements led to more efficient, reliable, and maintainable software development practices.",
+      "citations": [
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 68
+        },
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 68
+        },
+        {
+          "video_id": "pBlH24tFRQk",
+          "seconds": 68
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the use of functions or methods to eliminate code repetition, aligning with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 7.49,
+      "grounded": 1
+    },
+    {
+      "question": "Was macht die Sigmoid-Funktion?",
+      "course": "neural-networks",
+      "expected": "Sie drückt die gewichtete Summe in den Bereich zwischen 0 und 1.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 624,
+      "answer": "Die Sigmoid-Funktion, auch bekannt als logistische Kurve, wird häufig in neuronalen Netzwerken verwendet. Sie transformiert Eingabewerte in einen Bereich zwischen 0 und 1. Sehr negative Eingaben führen zu Ausgaben nahe 0, während sehr positive Eingaben Ausgaben nahe 1 erzeugen. Diese Funktion ermöglicht es, die Aktivierung eines Neurons als Maß dafür zu betrachten, wie positiv die gewichtete Summe ist (page 21) (10:24, https://www.youtube.com/watch?v=aircAruvnKk&t=624s).",
+      "citations": [
+        {
+          "video_id": "aircAruvnKk",
+          "seconds": 624
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer correctly states that the Sigmoid function transforms input values into a range between 0 and 1, which aligns with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.8,
+      "grounded": 1
+    },
+    {
+      "question": "How does garbage collection work in Java?",
+      "course": "java-course",
+      "expected": "NOT_COVERED",
+      "expected_video": null,
+      "expected_seconds": null,
+      "answer": "The course material does not cover how garbage collection works in Java. You might want to switch to \"Whole course\" to search all the course materials for this topic.",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "Guard: said not covered",
+      "retrieval_hit": null,
+      "timestamp_ok": null,
+      "latency": 3.23,
+      "grounded": null
+    },
+    {
+      "question": "What is stochastic gradient descent?",
+      "course": "neural-networks",
+      "expected": "Shuffle the training data, split it into mini-batches (e.g. 100 examples) and compute each step on a mini-batch: less precise but much faster.",
+      "expected_video": "Ilg3gGewQ5U",
+      "expected_seconds": 558,
+      "answer": "Stochastic gradient descent (SGD) is a technique used in training neural networks to optimize the weights and biases by minimizing the cost function. Instead of calculating the gradient of the cost function using the entire dataset, which can be computationally expensive, SGD randomly divides the training data into smaller subsets called mini-batches. Each mini-batch is used to compute an approximate gradient, allowing for quicker updates to the model's parameters.\n\nThis method results in a trajectory that resembles a \"drunk man stumbling down a hill,\" as the steps taken are not the most efficient but provide significant computational speedup. By repeatedly going through all the mini-batches and making adjustments, the model converges towards a local minimum of the cost function, improving its performance on the training examples (10:25, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=625s) (9:18, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=558s).",
+      "citations": [
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 625
+        },
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 558
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the process of using mini-batches in SGD for faster computation, aligning with the key point of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 6.34,
+      "grounded": 1
+    },
+    {
+      "question": "What is encapsulation?",
+      "course": "java-course",
+      "expected": "Variables are private and only accessible via methods that validate input (e.g. reject negative deposits); the code is a capsule you talk to via messages.",
+      "expected_video": "szYzBC89CPE",
+      "expected_seconds": 2,
+      "answer": "Encapsulation is a fundamental concept in object-oriented programming that involves restricting access to certain components of an object and only allowing interaction through specified methods. This means that the internal state of an object is hidden from the outside, and any changes to that state must be made through public methods. \n\nFor example, in a banking application, if a hacker tries to deposit an invalid amount, the encapsulation ensures that the internal variables are private and can only be accessed through methods that validate the input. This protects the data and enhances security, as the entire code can be viewed as a capsule that communicates only through defined messages (0:02, https://www.youtube.com/watch?v=szYzBC89CPE&t=2s).",
+      "citations": [
+        {
+          "video_id": "szYzBC89CPE",
+          "seconds": 2
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes encapsulation and emphasizes the importance of accessing private variables through methods that validate input, aligning with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 4.61,
+      "grounded": 1
+    },
+    {
+      "question": "What does a neuron hold in this network?",
+      "course": "neural-networks",
+      "expected": "A number between 0 and 1, called its activation.",
+      "expected_video": "aircAruvnKk",
+      "expected_seconds": 143,
+      "answer": "In this network, a neuron holds a number, specifically an activation value between 0 and 1. This activation represents the input it receives, which can be thought of as the grayscale value of a corresponding pixel in an image. For example, in a network processing a 28x28 pixel image, each of the 784 neurons in the first layer holds a number that indicates the brightness of each pixel, where 0 represents black and 1 represents white (2:23, URL) (page 6). The activation of a neuron can be visualized as being \"lit up\" when it has a high value (page 29).",
+      "citations": [],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately describes the activation value as a number between 0 and 1, aligning with the reference answer.",
+      "retrieval_hit": 0,
+      "timestamp_ok": 0,
+      "latency": 5.79,
+      "grounded": 1
+    },
+    {
+      "question": "What is abstraction?",
+      "course": "java-course",
+      "expected": "Selecting only the relevant data from a larger pool, e.g. only the customer information a bank needs; the data can then be reused.",
+      "expected_video": "SwAkGw4K8D4",
+      "expected_seconds": 0,
+      "answer": "Abstraction in programming, particularly in Object-Oriented Programming (OOP), refers to the concept of simplifying complex systems by focusing on the essential characteristics while hiding the unnecessary details. For example, when creating a banking application, you might only need relevant information about a customer, such as their name and address, rather than all possible data about them. This process of selecting only the relevant data from a larger pool is what abstraction is about (0:00, https://www.youtube.com/watch?v=SwAkGw4K8D4&t=0s).\n\nOnce the data is abstracted, it can be reused across various applications, such as in employee databases or hospitals, demonstrating the versatility of the same set of data (1:09, https://www.youtube.com/watch?v=SwAkGw4K8D4&t=69s).",
+      "citations": [
+        {
+          "video_id": "SwAkGw4K8D4",
+          "seconds": 0
+        },
+        {
+          "video_id": "SwAkGw4K8D4",
+          "seconds": 69
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer captures the essence of selecting relevant data from a larger pool, aligning with the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.04,
+      "grounded": 1
+    },
+    {
+      "question": "What are the three ways to increase a neuron's activation?",
+      "course": "neural-networks",
+      "expected": "Increase the bias, increase the weights, or change the activations of the previous layer.",
+      "expected_video": "Ilg3gGewQ5U",
+      "expected_seconds": 284,
+      "answer": "The three ways to increase a neuron's activation are:\n\n1. **Increase the bias**: Adjusting the bias value associated with the neuron can help raise its activation level.\n2. **Increase the weights**: Modifying the weights of the connections to the neuron can enhance its activation, especially if the connections are from highly active neurons.\n3. **Change the activations from the previous layer**: Altering the activations of the neurons in the preceding layer can also contribute to increasing the activation of the target neuron (5:55, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=355s) (4:44, https://www.youtube.com/watch?v=Ilg3gGewQ5U&t=284s).",
+      "citations": [
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 355
+        },
+        {
+          "video_id": "Ilg3gGewQ5U",
+          "seconds": 284
+        }
+      ],
+      "accuracy": 1,
+      "judge": "The tutor's answer accurately reflects the key points of the reference answer.",
+      "retrieval_hit": 1,
+      "timestamp_ok": 1,
+      "latency": 5.44,
+      "grounded": 1
+    }
+  ]
+}

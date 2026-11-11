@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Orbs, Tilt } from '../components/Scene3D'
@@ -32,6 +33,11 @@ const FAQ = [
 
 export default function LandingPage() {
   const { user } = useAuth()
+  const [evalSummary, setEvalSummary] = useState(null)
+  useEffect(() => {
+    fetch('/eval-results.json').then((r) => (r.ok ? r.json() : null))
+      .then((d) => setEvalSummary(d?.summary ?? null)).catch(() => {})
+  }, [])
   if (user) return <Navigate to="/home" replace />
 
   return (
@@ -193,14 +199,16 @@ export default function LandingPage() {
       <section aria-label="Tested" style={{ ...wrap, paddingTop: 72, paddingBottom: 72, display: 'grid', justifyItems: 'center', gap: 14, textAlign: 'center' }}>
         <h2 style={{ ...serif, fontSize: 34 }}>Tested on real course questions</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
-          {[['[XX / 30]', 'answers correct'], ['[XX %]', 'timestamps within 10 s'], ['[X.X s]', 'average answer time']].map(([value, label]) => (
-            <div key={label} style={{ minWidth: 200, border: '1px dashed #BDB3D3', borderRadius: 16, padding: 18, background: '#fff' }}>
+          {[[evalSummary ? `${evalSummary.accuracy}%` : '…', 'answers correct'],
+            [evalSummary ? `${evalSummary.grounded_rate}%` : '…', 'answers cite the course'],
+            [evalSummary ? `${evalSummary.latency_median} s` : '…', 'median answer time']].map(([value, label]) => (
+            <div key={label} style={{ minWidth: 200, border: '1px solid var(--line)', borderRadius: 16, padding: 18, background: '#fff' }}>
               <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--mint)' }}>{value}</div>
               <div className="muted" style={{ fontSize: 14 }}>{label}</div>
             </div>
           ))}
         </div>
-        <p className="muted" style={{ fontSize: 13 }}>Measured with a LangSmith evaluation</p>
+                <Link to="/evaluation" style={{ color: 'var(--mint)', fontWeight: 600 }}>See all {evalSummary?.questions ?? 30} questions and how we measure →</Link>
       </section>
 
       {/* 9. FAQ */}

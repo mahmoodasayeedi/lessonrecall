@@ -26,7 +26,9 @@ Rules:
   cite each of them, up to 3, so the student can see where they agree.
 - Answer in the same language as the student's message.
 - For requests to summarise the video, list its key points, or say what to remember for an exam,
-  use the video_summary tool and cite the chapter timestamps."""
+  use the video_summary tool and cite the chapter timestamps.
+- Put each citation in its own parentheses exactly as CITE AS gives it, e.g. (2:23, URL) (page 8).
+  Never merge citations with ";" and never write a time without its link."""
 
 
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
@@ -35,11 +37,16 @@ checkpointer = InMemorySaver()
 # "(9:16, URL)", "( 9:16, URL)", "(CITE AS: 9:16, URL)" or "CITE AS: (9:16, URL)" → "(9:16, URL)"
 CITATION = re.compile(
     r"(?:CITE AS:\s*)?\(\s*(?:CITE AS:\s*)?(\d+:\d{2}),\s*(https://www\.youtube\.com/watch\?v=[\w-]+&t=(\d+)s)\s*\)")
-PAGE = re.compile(r"(?:CITE AS:\s*)?\(\s*(?:CITE AS:\s*)?page (\d+)\s*\)")
+PAGE = re.compile(r"(?:CITE AS:\s*)?\(\s*(?:CITE AS:\s*)?page (\d+)[^()]*\)")
+# "((a), (b))" → "(a), (b)"   and   "(a; b)" → "(a) (b)"
+OUTER = re.compile(r"\(\s*((?:\([^()]*\)[\s,;]*)+)\)")
+GROUP = re.compile(r"\(([^()]*;[^()]*)\)")
 
 
 def fix_citations(text: str) -> str:
-    """Rebuild every time label from the seconds in its link, and normalise page citations."""
+    """Split merged citations, rebuild every time label from its link, and normalise page citations."""
+    text = OUTER.sub(lambda m: m.group(1).rstrip(" ,;"), text)
+    text = GROUP.sub(lambda m: " ".join(f"({p.strip()})" for p in m.group(1).split(";")), text)
     text = CITATION.sub(lambda m: f"({format_time(int(m.group(3)))}, {m.group(2)})", text)
     text = PAGE.sub(lambda m: f"(page {m.group(1)})", text)
     return text.replace("CITE AS:", "").strip()
@@ -50,7 +57,8 @@ def chat(message, thread_id, course_id, video_id=None, language: str | None = No
     agent = create_react_agent(
         get_llm(),
         make_tools(course_id, video_id),
-        prompt=SYSTEM_PROMPT,
+                prompt=SYSTEM_PROMPT + ("\n- Scope: ONE video only." if video_id
+                                else "\n- Scope: the WHOLE course. Never suggest switching to 'Whole course'."),
         checkpointer=checkpointer,
     )
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 10}
@@ -82,7 +90,8 @@ def chat_stream(message, thread_id, course_id, video_id=None, language: str | No
     agent = create_react_agent(
         get_llm(),
         make_tools(course_id, video_id),
-        prompt=SYSTEM_PROMPT,
+               prompt=SYSTEM_PROMPT + ("\n- Scope: ONE video only." if video_id
+                                else "\n- Scope: the WHOLE course. Never suggest switching to 'Whole course'."),
         checkpointer=checkpointer,
     )
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 10}

@@ -1,1 +1,31 @@
-question,expected_answer,video_id,start_seconds
+question,expected_answer,course_id,video_id,start_seconds
+What does a neuron hold in this network?,"A number between 0 and 1, called its activation.",neural-networks,aircAruvnKk,143
+How many neurons are in the input layer and why?,"784, one for each pixel of the 28x28 input image.",neural-networks,aircAruvnKk,143
+How many neurons does the output layer have?,"10, one for each digit.",neural-networks,aircAruvnKk,212
+How many hidden layers does the example network have?,"Two hidden layers with 16 neurons each, which is a somewhat arbitrary choice.",neural-networks,aircAruvnKk,212
+What is the sigmoid function used for?,"It squishes the weighted sum into the range between 0 and 1 (also called a logistic curve).",neural-networks,aircAruvnKk,624
+What is the bias of a neuron?,"A number added to the weighted sum before the sigmoid; it sets how high the weighted sum must be before the neuron becomes meaningfully active.",neural-networks,aircAruvnKk,624
+How many weights and biases does the network have in total?,"Almost exactly 13,000.",neural-networks,aircAruvnKk,696
+What is ReLU and why is it used instead of sigmoid?,"Rectified linear unit: max(0, a). It is much easier to train, especially for very deep networks.",neural-networks,aircAruvnKk,1043
+How is the cost of a single training example calculated?,"Add up the squares of the differences between the output activations and the values you want them to have.",neural-networks,IHZwWFHWa-w,207
+What is gradient descent?,"Repeatedly nudging the inputs of a function by a multiple of the negative gradient to move towards a local minimum of the cost function.",neural-networks,IHZwWFHWa-w,551
+How accurate is the network on images it has never seen?,"About 96% correct, and up to 98% with some tweaks to the hidden layers.",neural-networks,IHZwWFHWa-w,753
+Do the hidden layers really detect edges and loops?,"No. The weights look almost random; the network found a local minimum that classifies well but does not pick up the hoped-for patterns.",neural-networks,IHZwWFHWa-w,823
+What is backpropagation?,"The algorithm for computing the gradient of the cost function, i.e. how each training example wants to nudge the weights and biases.",neural-networks,Ilg3gGewQ5U,75
+What are the three ways to increase a neuron's activation?,"Increase the bias, increase the weights, or change the activations of the previous layer.",neural-networks,Ilg3gGewQ5U,284
+What is stochastic gradient descent?,"Shuffle the training data, split it into mini-batches (e.g. 100 examples) and compute each step on a mini-batch: less precise but much faster.",neural-networks,Ilg3gGewQ5U,558
+What is the derivative of the cost with respect to the last activation?,"2 times (a(L) minus y), so it is proportional to the difference between the output and the desired value.",neural-networks,tIeHLnjs5U8,208
+Was macht die Sigmoid-Funktion?,"Sie drückt die gewichtete Summe in den Bereich zwischen 0 und 1.",neural-networks,aircAruvnKk,624
+Wie viele Neuronen hat die Eingabeschicht?,"784, eines pro Pixel des 28x28-Bildes.",neural-networks,aircAruvnKk,143
+What is the Java Virtual Machine?,"A virtual platform in RAM that takes the byte code and converts it into the native machine code of the platform it runs on.",java-course,2Xa3Y4xz8_s,272
+What is a platform in computing?,"The combination of operating system and processor, for example Windows plus Intel (Wintel).",java-course,2Xa3Y4xz8_s,204
+Why is Java both a language and a platform?,"Code compiled once to byte code runs on all platforms with a JVM, including PCs and mobile devices.",java-course,2Xa3Y4xz8_s,341
+What problem did structured programming solve?,"Repeated code was put into functions or methods that are called wherever needed, instead of writing it again and again.",java-course,pBlH24tFRQk,68
+What is object-oriented programming?,"Combining data and the actions on that data; it brings abstraction, encapsulation, inheritance and polymorphism.",java-course,pBlH24tFRQk,68
+What is abstraction?,"Selecting only the relevant data from a larger pool, e.g. only the customer information a bank needs; the data can then be reused.",java-course,SwAkGw4K8D4,0
+What is encapsulation?,"Variables are private and only accessible via methods that validate input (e.g. reject negative deposits); the code is a capsule you talk to via messages.",java-course,szYzBC89CPE,2
+Was ist Kapselung in Java?,"Variablen sind privat und nur über Methoden erreichbar, die Eingaben prüfen; der Code ist wie eine Kapsel.",java-course,szYzBC89CPE,2
+What is a convolutional neural network?,NOT_COVERED,neural-networks,,
+How does the attention mechanism in transformers work?,NOT_COVERED,neural-networks,,
+How do you write a for loop in Java?,NOT_COVERED,java-course,,
+How does garbage collection work in Java?,NOT_COVERED,java-course,,
