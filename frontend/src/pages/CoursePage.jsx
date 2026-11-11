@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState ,useRef} from 'react'
 
 import { api } from '../api'
 import Sidebar from '../components/Sidebar'
@@ -79,6 +79,21 @@ const loadMaterials = useCallback(() => {
     const target = materials.find((m) => m.externalId === videoId)
     if (target && target.id !== selected?.id) setSelected(target)
     setSeek((s) => ({ start: Math.floor(seconds), key: s.key + 1 }))
+  }
+    // Source peek: the transcript text behind a cited minute (cached per video)
+  const transcriptCache = useRef({})
+  async function peek(videoId, seconds) {
+    const m = materials.find((x) => x.externalId === videoId)
+    if (!m) return null
+    if (!transcriptCache.current[m.id]) {
+      transcriptCache.current[m.id] = api(`/courses/${id}/materials/${m.id}/transcript`)
+        .then((t) => t.sections)
+        .catch((e) => { delete transcriptCache.current[m.id]; throw e })
+    }
+    const sections = await transcriptCache.current[m.id]
+    const section = sections.find((s) => seconds >= s.start_seconds && seconds < s.end_seconds)
+      ?? sections.reduce((a, b) => (Math.abs(b.start_seconds - seconds) < Math.abs(a.start_seconds - seconds) ? b : a))
+    return { title: m.title, text: section.text }
   }
   function generateQuiz() {
     if (!selected) return
@@ -207,7 +222,7 @@ const loadMaterials = useCallback(() => {
           {/* Right: the chat (bigger), or the tabs when the chat is hidden */}
           <div style={{ flex: '3 1 480px', minWidth: 0, height: 'calc(100vh - 110px)', position: 'sticky', top: 18 }}>
             {chatOpen
-              ? <ChatPanel courseId={id} videoId={selected?.externalId} onPlay={playAt} onMessagesChange={setChatMessages} />
+              ? <ChatPanel courseId={id} videoId={selected?.externalId} onPlay={playAt} peek={peek} onMessagesChange={setChatMessages} />
               : tabs}
           </div>
         </div>

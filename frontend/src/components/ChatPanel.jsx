@@ -24,7 +24,7 @@ const STARTERS = {
   Hindi:   ['यह वीडियो किस बारे में है?', 'मुख्य बिंदुओं का सारांश दें', 'परीक्षा के लिए मुझे क्या याद रखना चाहिए?'],
 }
 
-export default function ChatPanel({ courseId, videoId, onPlay, onMessagesChange }) {
+  export default function ChatPanel({ courseId, videoId, onPlay, peek, onMessagesChange }) {
   const [sessionId, setSessionId] = useState(null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -219,7 +219,7 @@ function toggleMic() {
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
                                    padding: '10px 14px', borderRadius: '14px 14px 4px 14px', fontSize: 14 }}>{m.content}</div>
         ) : (
-            <AnswerCard key={m.id ?? i} message={m} onPlay={onPlay}
+            <AnswerCard key={m.id ?? i} message={m} onPlay={onPlay} peek={peek}
             speaking={speakingId === i}
             onListen={() => toggleSpeak(i, m.content)} />
         ))}
@@ -284,7 +284,7 @@ function toggleMic() {
   )
 }
 
-function AnswerCard({ message, onPlay, speaking, onListen }) {
+function AnswerCard({ message, onPlay,peek, speaking, onListen }) {
     if (message.streaming) {
     return (
       <div style={{ border: '1px solid var(--line)', borderRadius: 14, padding: 16, background: '#fff',
@@ -298,7 +298,7 @@ function AnswerCard({ message, onPlay, speaking, onListen }) {
     return (
       <div style={{ border: '1px dashed #BDB3D3', borderRadius: 14, padding: '14px 16px', background: 'var(--paper)' }}>
         <span className="badge badge-soft">Not covered in this course</span>
-        <div className="muted" style={{ marginTop: 8 }}><AnswerText text={message.content} onPlay={onPlay} /></div>
+        <div className="muted" style={{ marginTop: 8 }}><AnswerText text={message.content} onPlay={onPlay} peek={peek}/></div>
       </div>
     )
   }
@@ -310,7 +310,7 @@ function AnswerCard({ message, onPlay, speaking, onListen }) {
           {info.hasVideo && info.hasPdf && <span className="badge badge-soft">Video and slides agree</span>}
         </div>
       )}
-      <AnswerText text={message.content} onPlay={onPlay} />
+      <AnswerText text={message.content} onPlay={onPlay} peek={peek} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
         <button className="btn" onClick={onListen} style={{ padding: '4px 12px', fontSize: 13 }}>
           {speaking ? '■ Stop' : '🔊 Listen'}
