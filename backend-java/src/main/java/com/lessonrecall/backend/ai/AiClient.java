@@ -14,6 +14,12 @@ import org.springframework.web.server.ResponseStatusException;
 import com.lessonrecall.backend.ai.AiDtos.CourseQuizRequest;
 import com.lessonrecall.backend.ai.AiDtos.CourseQuizResponse;
 import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
+import org.springframework.http.HttpStatus;
+
 @Component
 public class AiClient {
 
@@ -72,6 +78,27 @@ public class AiClient {
                 .body(ChatResponse.class);
     }
 
+    // Reads FastAPI's Server-Sent Events line by line and hands every line to onLine
+    public void chatStream(String message, String threadId, String slug, String videoId, String language,
+                           Consumer<String> onLine) {
+        rest.post().uri("/chat/stream")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .body(new ChatRequest(message, threadId, slug, videoId, language))
+                .exchange((request, response) -> {
+                    if (response.getStatusCode().isError()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "The AI service is not available.");
+                    }
+                    try (var reader = new BufferedReader(
+                            new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            onLine.accept(line);
+                        }
+                    }
+                    return null;
+                });
+    }
     public SummaryResponse summary(String courseSlug, String videoId) {
         return rest.post().uri("/summary")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../api'
+import { api, apiStream } from '../api'
 import AnswerText, { analyse } from './AnswerText'
 import ChatComposer from './ChatComposer'
 import { speak, stopSpeaking, createRecognizer } from './speech'
@@ -75,12 +75,17 @@ const starters = STARTERS[language] ?? STARTERS.English
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [messages, busy])
+
+
+    const STREAMING = true      // set to false to go back to the old, non-streaming chat
+
   async function send(text) {
     if (!text.trim() || busy) return
     setError('')
     setSuggestions([])
     setBusy(true)
     setInput('')
+    const answerId = `stream-${Date.now()}`
     setMessages((m) => [...m, { id: `tmp-${Date.now()}`, role: 'user', content: text }])   // show it immediately
     try {
       let sid = sessionId
@@ -88,13 +93,40 @@ const starters = STARTERS[language] ?? STARTERS.English
         sid = (await api(`/courses/${courseId}/chats`, { method: 'POST' })).id
         setSessionId(sid)
       }
-      const reply = await api(`/chats/${sid}/messages`, {
-        method: 'POST',
-        body: { message: text, videoId: scope === 'video' ? videoId : null },
+      const body = { message: text, videoId: scope === 'video' ? videoId : null }
+
+      if (!STREAMING) {
+        const reply = await api(`/chats/${sid}/messages`, { method: 'POST', body })
+        setMessages((m) => [...m.slice(0, -1), reply.userMessage, { ...reply.assistantMessage, toolsUsed: reply.toolsUsed }])
+        setSuggestions(reply.suggestions || [])
+        return
+      }
+
+      // Empty answer bubble that fills up token by token
+      setMessages((m) => [...m, { id: answerId, role: 'assistant', content: '', streaming: true }])
+      const update = (fn) => setMessages((m) => m.map((x) => (x.id === answerId ? fn(x) : x)))
+
+      let finished = false
+      await apiStream(`/chats/${sid}/messages/stream`, body, (ev) => {
+        if (ev.type === 'token') {
+          update((x) => ({ ...x, content: x.content + ev.text }))
+        } else if (ev.type === 'done') {
+          finished = true
+          // Replace the raw text with the cleaned answer (correct citation links)
+          update((x) => ({ ...x, content: ev.answer, toolsUsed: ev.tools_used, streaming: false }))
+          setSuggestions(ev.suggestions || [])
+        } else if (ev.type === 'error') {
+          finished = true
+          setMessages((m) => m.filter((x) => x.id !== answerId))
+          setError(ev.message)
+        }
       })
-      setMessages((m) => [...m.slice(0, -1), reply.userMessage, { ...reply.assistantMessage, toolsUsed: reply.toolsUsed }])
-      setSuggestions(reply.suggestions || [])
+      if (!finished) {
+        setMessages((m) => m.filter((x) => x.id !== answerId))
+        setError('The answer was interrupted. Please try again.')
+      }
     } catch (err) {
+      setMessages((m) => m.filter((x) => x.id !== answerId))
       setError(err.message)
     } finally {
       setBusy(false)
@@ -183,11 +215,13 @@ function toggleMic() {
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
                                    padding: '10px 14px', borderRadius: '14px 14px 4px 14px', fontSize: 14 }}>{m.content}</div>
         ) : (
-          <AnswerCard message={m} onPlay={onPlay}
+            <AnswerCard key={m.id ?? i} message={m} onPlay={onPlay}
             speaking={speakingId === i}
             onListen={() => toggleSpeak(i, m.content)} />
         ))}
-        {busy && <div className="muted" role="status">Thinking… searching the course</div>}
+                {busy && !messages.at(-1)?.content && (
+          <div className="muted" role="status">Thinking… searching the course</div>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -230,6 +264,14 @@ function toggleMic() {
 }
 
 function AnswerCard({ message, onPlay, speaking, onListen }) {
+    if (message.streaming) {
+    return (
+      <div style={{ border: '1px solid var(--line)', borderRadius: 14, padding: 16, background: '#fff',
+                    whiteSpace: 'pre-wrap', fontSize: 15 }}>
+        {message.content}<span className="muted">▍</span>
+      </div>
+    )
+  }
   const info = analyse(message.content)
   if (info.notCovered) {
     return (

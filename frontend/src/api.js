@@ -28,3 +28,31 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   }
   return data
 }
+
+export async function apiStream(path, body, onEvent) {
+  const token = getToken()
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await fetch(`${BASE}/api${path}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`Request failed (${res.status})`)
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const events = buffer.split('\n\n')       // a blank line ends one event
+    buffer = events.pop()                      // keep the unfinished part for the next round
+    for (const e of events) {
+      const line = e.split('\n').find((l) => l.startsWith('data:'))
+      if (line) onEvent(JSON.parse(line.slice(5)))
+    }
+  }
+}

@@ -13,6 +13,8 @@ load_dotenv(override=True)
 import hashlib
 import logging
 import tempfile
+from fastapi.responses import JSONResponse, StreamingResponse
+from app.agent.agent import chat, chat_stream
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, Header, Request, UploadFile
 from fastapi import FastAPI, File, Request, UploadFile
@@ -84,20 +86,19 @@ def ingest_from_youtube(request: YouTubeIngestRequest) -> IngestResponse:
 def ingest_from_upload(
     file: UploadFile = File(...),
     course_id: str = Form(default="demo", pattern=r"^[a-z0-9-]{1,64}$"),
+    language: str | None = Form(None),
 ) -> IngestResponse:
     """Upload an MP4 / MP3 (max 25 MB). Transcribed with Whisper."""
     settings = get_settings()
     data = file.file.read()
-    language: str | None = Form(None)
     ext = validate_upload(file.filename, len(data), settings.max_upload_mb)
 
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / f"upload{ext}"
         path.write_bytes(data)
-        segments, language = whisper_transcriber.transcribe(path)
+        segments, language = whisper_transcriber.transcribe(path, language)
 
     transcript = Transcript(
-        # Same file -> same id, so uploading twice doesn't create duplicates later
         video_id="upload-" + hashlib.sha256(data).hexdigest()[:12],
         title=Path(file.filename).stem,
         source_type="upload",
@@ -203,3 +204,13 @@ def course_quiz(request: CourseQuizRequest):
     """Final quiz across all materials of a course (with correct answers: Spring Boot keeps them secret)."""
     return {"questions": generate_course_quiz(request.course_id, request.document_ids,
                                               request.number_of_questions)}
+
+@app.post("/chat/stream")
+def chat_stream_endpoint(request: ChatRequest) -> StreamingResponse:
+    """Same as /chat, but the answer arrives token by token (Server-Sent Events)."""
+    return StreamingResponse(
+        chat_stream(request.message, request.thread_id, request.course_id,
+                    request.video_id, language=request.language),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

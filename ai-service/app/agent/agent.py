@@ -5,6 +5,10 @@ import re
 from pydantic import BaseModel, Field
 from app.rag.answer import format_time
 from app.agent.tools import get_llm, make_tools
+import json
+import logging
+
+log = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are LessonRecall, a friendly study assistant for one course.
 Rules:
@@ -60,6 +64,48 @@ def chat(message, thread_id, course_id, video_id=None, language: str | None = No
         "thread_id": thread_id,
         "suggestions": suggest_followups(message, answer,language),
     }
+def sse(data: dict) -> str:
+    """One Server-Sent Event: 'data: {...}' followed by a blank line."""
+    return f"data: {json.dumps(data)}\n\n"
+
+
+def chat_stream(message, thread_id, course_id, video_id=None, language: str | None = None):
+    """Same as chat(), but yields the answer token by token as Server-Sent Events."""
+    if language:
+        message = f"{message}\n\n[Reply in {language}. Keep every citation exactly as given.]"
+    agent = create_react_agent(
+        get_llm(),
+        make_tools(course_id, video_id),
+        prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
+    )
+    config = {"configurable": {"thread_id": thread_id}}
+    before = len(agent.get_state(config).values.get("messages", []))
+
+    try:
+        # stream_mode="messages" gives us every LLM token as it is generated
+        for chunk, meta in agent.stream({"messages": [("user", message)]},
+                                        config=config, stream_mode="messages"):
+            # Only tokens from the agent itself, not from LLM calls inside tools (summary, quiz)
+            if meta.get("langgraph_node") == "agent" and isinstance(chunk.content, str) and chunk.content:
+                yield sse({"type": "token", "text": chunk.content})
+
+        # Stream finished: build the clean final answer exactly like chat() does
+        new_messages = agent.get_state(config).values["messages"][before:]
+        tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
+        answer = fix_citations(new_messages[-1].content)
+        yield sse({
+            "type": "done",
+            "answer": answer,
+            "tools_used": tools_used,
+            "thread_id": thread_id,
+            "suggestions": suggest_followups(message, answer, language),
+        })
+    except Exception:
+        log.exception("Streaming chat failed")
+        yield sse({"type": "error", "message": "Something went wrong while answering. Please try again."})
+
+
 class FollowUps(BaseModel):
     questions: list[str] = Field(description="Exactly 3 short follow-up questions, max 12 words each")
 

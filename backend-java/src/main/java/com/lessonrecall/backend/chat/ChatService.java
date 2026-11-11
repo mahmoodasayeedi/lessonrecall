@@ -11,6 +11,16 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.boot.json.JsonParserFactory;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.io.UncheckedIOException;
+
+import java.util.Map;
 
 @Service
 public class ChatService {
@@ -25,6 +35,8 @@ public class ChatService {
     private final CourseService courses;
     private final UserRepository users;
     private final AiClient ai;
+    // Java 21 virtual threads: one cheap thread per streaming answer
+    private final ExecutorService streamExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     public ChatService(ChatSessionRepository sessions, ChatMessageRepository messages,
                        CourseService courses, UserRepository users, AiClient ai) {
@@ -71,7 +83,46 @@ public class ChatService {
         return new ChatReply(toResponse(userMsg), toResponse(botMsg), result.toolsUsed(),
                 result.suggestions() == null ? List.of() : result.suggestions());
     }
+    public SseEmitter sendStream(Long userId, Long sessionId, String text, String videoId) {
+        // 1. Now, on the request thread: checks + save the question
+        ChatSession s = ownSession(userId, sessionId);
+        courses.requireAccess(userId, s.getCourse().getId());
+        String language = users.findById(userId).map(u -> u.getAnswerLanguage()).orElse(null);
+        String slug = s.getCourse().getSlug();
+        String threadId = s.getThreadId();
 
+        save(s, "user", text);
+        if ("New chat".equals(s.getTitle())) {
+            s.setTitle(text.length() > 60 ? text.substring(0, 60) + "…" : text);
+            sessions.save(s);
+        }
+
+        // 2. In the background: forward every event; save the answer when "done" arrives
+        SseEmitter emitter = new SseEmitter(180_000L);          // 3 minutes max
+        streamExecutor.execute(() -> {
+            try {
+                ai.chatStream(text, threadId, slug, videoId, language, line -> {
+                    if (!line.startsWith("data: ")) return;      // skip the blank separator lines
+                    String json = line.substring(6);
+                    try {
+                        if (json.contains("\"done\"")) {
+                            Map<String, Object> event = JsonParserFactory.getJsonParser().parseMap(json);
+                            if ("done".equals(event.get("type"))) {
+                                save(s, "assistant", (String) event.get("answer"));
+                            }
+                        }
+                        emitter.send(SseEmitter.event().data(json));   // sent to the browser immediately
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);             // the user closed the tab
+                    }
+                });
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        });
+        return emitter;
+    }
     public List<MessageResponse> history(Long userId, Long sessionId) {
         ownSession(userId, sessionId);
         return messages.findBySessionIdOrderByCreatedAtAsc(sessionId).stream().map(this::toResponse).toList();
