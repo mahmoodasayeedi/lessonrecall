@@ -20,16 +20,19 @@ Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedir
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Speech pipeline**                 | YouTube captions via `youtube-transcript-api`; if there are none, audio download with `yt-dlp` + **OpenAI Whisper** transcription. Also MP4/MP3/M4A/WAV uploads (Whisper) and PDF slides (one chunk per page). Video language can be chosen or auto-detected |
 | **RAG with minute-exact citations** | ~75 s chunks with 10 s overlap, OpenAI embeddings, **Pinecone** with one namespace per course. Citations are rebuilt deterministically from the timestamp, so links never point to an invented minute                                                        |
+| **Source peek**                     | Hover or focus a ▶ timestamp in an answer to see the exact transcript text it is based on, before playing the video |
 | **Answer Guard**                    | Relevance threshold + prompt rules: if the course doesn't cover a question, LessonRecall says so instead of making something up                                                                                                                              |
-| **LangGraph agent**                 | Tools: `video_search`, `course_search`, `video_summary`, `quiz_generator`, `study_planner`; conversation memory per chat thread; follow-up suggestions                                                                                                       |
+| **LangGraph agent**                 | Tools: `video_search`, `course_search`, `video_summary`, `quiz_generator`, `study_planner`; conversation memory per chat thread; follow-up suggestions; **live steps** while it works (“Searching this video… → Found 3 matching moments → Writing the answer…”) |
 | **Recall timeline**                 | Chapters, pins for every question asked, and rose **weak-topic zones** from missed quiz questions; click to replay                                                                                                                                           |
-| **Practice**                        | Quiz and flashcards per video, with a link back to the moment each answer is explained                                                                                                                                                                       |
+| **Practice**                        | Quiz per video and 3D flip flashcards with “I knew it / Review again”; every answer links back to the moment it is explained, and missed cards end in a “worth rewatching” list |
+| **Study plan**                      | One click: goal, days and minutes per day → a day-by-day plan across the whole course, shown as day cards |
 | **Final course quiz**               | Instructor generates a quiz across all materials, reviews it, sets a pass mark and publishes it. Learners get one attempt; grading happens on the server; class results for the instructor                                                                   |
 | **Languages & voice**               | Answer language per user (7 languages), voice input (browser speech recognition), read-aloud answers with a speaking avatar                                                                                                                                  |
+| **Tutor intro**                     | The landing page has a “Meet your tutor” button that plays a short lip-synced intro by the LessonRecall tutor character |
 | **Roles**                           | Instructors create class courses; learners join from the catalog or create private courses. Owners can edit/delete; learners can leave                                                                                                                       |
-| **Evaluation**                      | LangSmith evaluation with 30 questions and 5 metrics; results are public on the [Evaluation page](https://lessonrecall.vercel.app/evaluation)                                                                                                                |
-| **Streaming answers**               | Tokens stream from the LangGraph agent through FastAPI (SSE) and Spring Boot (`SseEmitter`) to React, so answers appear word by word                                                                                                                         |
-| **Deployment**                      | Live on Vercel + Render; YouTube captions and titles are fetched through a residential proxy in the cloud                                                                                                                                                    |
+| **Evaluation**                      | LangSmith evaluation with 30 questions and 5 metrics; results are public on the [Evaluation page](https://lessonrecall.vercel.app/evaluation) |
+| **Streaming answers**               | Tokens stream from the LangGraph agent through FastAPI (SSE) and Spring Boot (`SseEmitter`) to React, so answers appear word by word |
+| **Deployment**                      | Live on Vercel + Render; YouTube captions and titles are fetched through a residential proxy in the cloud |
 
 ### Planned (stretch goals)
 
@@ -170,15 +173,23 @@ YouTube blocks requests from cloud server IPs. The AI service therefore fetches 
 
 30 questions about two real courses (16 Neural Networks, 7 Java, 3 in German, 4 the courses don't cover), each with an expected answer, video and second (`ai-service/eval/questions.csv`). `python -m eval.run_eval` runs the real agent in whole-course mode as a LangSmith experiment and writes `frontend/public/eval-results.json`, which is shown on the [Evaluation page](https://lessonrecall.vercel.app/evaluation).
 
-| Metric                | How it is measured                                        | Result                      |
-| --------------------- | --------------------------------------------------------- | --------------------------- |
-| Accuracy              | LLM judge vs. reference answer; not-covered = no citation | **97 %**                    |
-| Grounded              | Answer cites a video minute or a slide page               | **96 %**                    |
-| Retrieval hit rate    | The expected video is cited                               | **85 %**                    |
-| Timestamp correctness | Cited minute within ±75 s (one chunk)                     | **73 %**                    |
-| Latency               | Full answer including follow-up suggestions               | **5.2 s** median, 6.8 s p90 |
+| Metric                | How it is measured                                         | Result                      |
+| --------------------- | ---------------------------------------------------------- | --------------------------- |
+| Accuracy              | LLM judge vs. reference answer; not-covered = no citation  | **97 %**                    |
+| Grounded              | Answer cites a video minute or a slide page                | **96 %**                    |
+| Retrieval hit rate    | The expected video is cited                                | **85 %**                    |
+| Timestamp correctness | Cited minute within ±75 s (one chunk)                      | **73 %**                    |
+| Latency               | Full answer including follow-up suggestions                | **5.2 s** median, 6.8 s p90 |
 
 The first run showed only 58 % retrieval hits. The misses revealed a real bug: the agent sometimes merged two citations in one bracket, which also made them unclickable in the app. After fixing `fix_citations` and the prompt, the hit rate rose to 85 %.
+
+----------------------------- | --------------- |
+| Answer accuracy               | _[to be added]_ |
+| Retrieval hit rate            | _[to be added]_ |
+| Timestamp correctness (±10 s) | _[to be added]_ |
+| Average latency               | _[to be added]_ |
+
+---
 
 ## API overview (Spring Boot)
 
@@ -187,7 +198,7 @@ The first run showed only 58 % retrieval hits. The misses revealed a real bug: t
 | Auth       | `POST /api/auth/register`, `/login`, `GET /me`, `PUT /password`, `GET/PUT /language`, `GET/PUT /avatar`                           |
 | Courses    | `GET/POST /api/courses`, `/mine`, `/catalog`, `POST /{id}/join`, `PUT/DELETE /{id}`, `DELETE /{id}/enrollment`                    |
 | Materials  | `POST /api/courses/{id}/materials/youtube`, `/upload`, `GET` list, `DELETE /{mid}`, `GET /{mid}/summary`, `/transcript`, `/quiz`  |
-| Chat       | `GET/POST /api/courses/{id}/chats`, `GET/POST /api/chats/{sid}/messages`, `POST /api/chats/{sid}/messages/stream` (SSE)           |
+| Chat       | `GET/POST /api/courses/{id}/chats`, `GET/POST /api/chats/{sid}/messages`, `POST /api/chats/{sid}/messages/stream` (SSE)            |
 | Progress   | `POST /api/courses/{id}/quiz-results`, `GET /weak-topics`                                                                         |
 | Final quiz | `GET /api/courses/{id}/final-quiz`, `POST /generate`, `DELETE /questions/{qid}`, `POST /publish`, `POST /attempt`, `GET /results` |
 
