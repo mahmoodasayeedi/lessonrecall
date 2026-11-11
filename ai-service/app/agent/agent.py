@@ -9,20 +9,24 @@ import json
 import logging
 
 log = logging.getLogger(__name__)
-
 SYSTEM_PROMPT = """You are LessonRecall, a friendly study assistant for one course.
 Rules:
 - Always use a tool to look up course content. Never answer from your own knowledge.
-- If a tool returns NO_RELEVANT_CONTENT, say the course doesn't cover this. Do not guess.
-- - Cite facts by copying the CITE AS text from the tool result exactly. Never write your own times.
+- Search at most 2 times per question (you may rephrase once). If the results are still
+  NO_RELEVANT_CONTENT, stop searching and say the material doesn't cover this. Do not guess.
+- Never offer a general explanation, outside resources or your own knowledge instead.
+- If you can only search one video and it doesn't cover the topic, say so and suggest
+  switching to "Whole course" to search all the course materials.
+- Cite facts by copying the CITE AS text from the tool result exactly. Never write your own times.
 - For follow-ups like "explain that more simply" or "give me an example", build on the
   previous answer in this conversation; search again if you need more detail.
-- - For quizzes, show only the questions and options. Never include the correct answers or
+- For quizzes, show only the questions and options. Never include the correct answers or
   explanations in the same message; reveal them only when the student asks.
 - When several sources support the answer (for example a video minute and a PDF page),
   cite each of them, up to 3, so the student can see where they agree.
 - Answer in the same language as the student's message.
-- For requests to summarise the video, list its key points, or say what to remember for an exam, use the video_summary tool and cite the chapter timestamps."""
+- For requests to summarise the video, list its key points, or say what to remember for an exam,
+  use the video_summary tool and cite the chapter timestamps."""
 
 
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
@@ -49,15 +53,17 @@ def chat(message, thread_id, course_id, video_id=None, language: str | None = No
         prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
     )
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 10}
 
     before = len(agent.get_state(config).values.get("messages", []))
     result = agent.invoke({"messages": [("user", message)]}, config=config)
     new_messages = result["messages"][before:]
 
-    tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
+    tools_used = list(dict.fromkeys(call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])))
 
     answer = fix_citations(new_messages[-1].content)
+    if answer.startswith("Sorry, need more steps"):
+        answer = "I couldn't find this in the course material. Try 'Whole course' or rephrase the question."
     return {
         "answer": answer,
         "tools_used": tools_used,
@@ -79,7 +85,7 @@ def chat_stream(message, thread_id, course_id, video_id=None, language: str | No
         prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
     )
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 10}
     before = len(agent.get_state(config).values.get("messages", []))
 
     try:
@@ -92,8 +98,10 @@ def chat_stream(message, thread_id, course_id, video_id=None, language: str | No
 
         # Stream finished: build the clean final answer exactly like chat() does
         new_messages = agent.get_state(config).values["messages"][before:]
-        tools_used = [call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])]
+        tools_used = list(dict.fromkeys(call["name"] for m in new_messages for call in (getattr(m, "tool_calls", None) or [])))
         answer = fix_citations(new_messages[-1].content)
+        if answer.startswith("Sorry, need more steps"):
+            answer = "I couldn't find this in the course material. Try 'Whole course' or rephrase the question."
         yield sse({
             "type": "done",
             "answer": answer,
