@@ -40,6 +40,8 @@ const recognizerRef = useRef(null)
  
 const [language, setLanguage] = useState('')
   const [steps, setSteps] = useState([])     // live agent steps while an answer is being prepared
+  const [planOpen, setPlanOpen] = useState(false)
+  const [plan, setPlan] = useState({ goal: 'Prepare for the exam', days: 5, minutes: 30 })
 
 useEffect(() => {
   api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
@@ -79,7 +81,7 @@ const starters = STARTERS[language] ?? STARTERS.English
 
     const STREAMING = true      // set to false to go back to the old, non-streaming chat
 
-  async function send(text) {
+  async function send(text, forceScope) {
     if (!text.trim() || busy) return
     setError('')
     setSteps([])
@@ -94,7 +96,7 @@ const starters = STARTERS[language] ?? STARTERS.English
         sid = (await api(`/courses/${courseId}/chats`, { method: 'POST' })).id
         setSessionId(sid)
       }
-      const body = { message: text, videoId: scope === 'video' ? videoId : null }
+            const body = { message: text, videoId: (forceScope ?? scope) === 'video' ? videoId : null }
 
       if (!STREAMING) {
         const reply = await api(`/chats/${sid}/messages`, { method: 'POST', body })
@@ -147,6 +149,10 @@ const starters = STARTERS[language] ?? STARTERS.English
     setMessages([])
   }
 
+  function sendPlan() {
+    setPlanOpen(false)
+    send(`🗓️ Make me a ${plan.days}-day study plan, ${plan.minutes} minutes per day. Goal: ${plan.goal}.`, 'course')
+  }
   const scopeButton = (value, text) => (
     <button type="button" onClick={() => setScope(value)} aria-pressed={scope === value}
       style={{ padding: '6px 12px', border: 'none', borderRadius: 8, font: 'inherit', fontSize: 13, cursor: 'pointer',
@@ -262,15 +268,44 @@ function toggleMic() {
           ))}
         </div>
       )}
-        {quickActions.map((q) => (
+               {quickActions.map((q) => (
           <button key={q} onClick={() => send(q)}
-  style={{ alignSelf: 'flex-start', background: 'var(--ink)', color: '#fff', border: 'none',
-           borderRadius: 999, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}>
-  {q}
-</button>
+            style={{ alignSelf: 'flex-start', background: 'var(--ink)', color: '#fff', border: 'none',
+                     borderRadius: 999, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}>
+            {q}
+          </button>
         ))}
+        <button onClick={() => setPlanOpen((o) => !o)} disabled={busy}
+          style={{ alignSelf: 'flex-start', background: 'var(--mint-tint)', color: 'var(--ink)', border: '1px solid var(--mint)',
+                   borderRadius: 999, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }}>
+          🗓️ Study plan
+        </button>
       </div>
-
+              {planOpen && (
+        <div style={{ display: 'grid', gap: 10, padding: 14, borderRadius: 14, background: 'var(--soft)', border: '1px solid var(--line)' }}>
+          <strong style={{ fontSize: 15 }}>🗓️ Plan my study (whole course)</strong>
+          <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>
+            Goal
+            <input className="input" value={plan.goal} onChange={(e) => setPlan({ ...plan, goal: e.target.value })} />
+          </label>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 13, flex: 1 }}>
+              Days
+              <input className="input" type="number" min="1" max="30" value={plan.days}
+                     onChange={(e) => setPlan({ ...plan, days: e.target.value })} />
+            </label>
+            <label style={{ display: 'grid', gap: 4, fontSize: 13, flex: 1 }}>
+              Minutes per day
+              <input className="input" type="number" min="10" max="240" step="5" value={plan.minutes}
+                     onChange={(e) => setPlan({ ...plan, minutes: e.target.value })} />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" onClick={sendPlan} disabled={!plan.goal.trim() || busy}>Create plan</button>
+            <button className="btn" onClick={() => setPlanOpen(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
         <ChatComposer
         value={input}
         onChange={setInput}

@@ -36,7 +36,6 @@ function CitationChip({ videoId, seconds, label, onPlay, peek }) {
   const [source, setSource] = useState(null)      // { title, text } | 'error' | null (loading)
 
   function show() {
-    console.log('peek?', typeof peek)
     setOpen(true)
     if (!peek || source) return
     peek(videoId, seconds)
@@ -76,23 +75,94 @@ function CitationChip({ videoId, seconds, label, onPlay, peek }) {
   )
 }
 
-export default function AnswerText({ text: raw, onPlay, peek }) {
-  const text = raw.replace(/CITE AS:\s*/g, '')
+// One line of text: citations become ▶ chips / page chips, **bold** becomes bold
+function renderInline(text, keyPrefix, onPlay, peek) {
   const parts = []
   let last = 0
   for (const m of text.matchAll(CITATION)) {
-    parts.push(...withBold(text.slice(last, m.index), `t${last}`))
+    parts.push(...withBold(text.slice(last, m.index), `${keyPrefix}t${last}`))
     if (m[2]) {
       const [, , videoId, seconds] = m
       const s = Number(seconds)
       const label = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-      parts.push(
-        <CitationChip key={`c${m.index}`} videoId={videoId} seconds={s} label={label} onPlay={onPlay} peek={peek} />)
+      parts.push(<CitationChip key={`${keyPrefix}c${m.index}`} videoId={videoId} seconds={s} label={label}
+                               onPlay={onPlay} peek={peek} />)
     } else {
-      parts.push(<span key={`p${m.index}`} className="chip chip-outline">page {m[4]}</span>)
+      parts.push(<span key={`${keyPrefix}p${m.index}`} className="chip chip-outline">page {m[4]}</span>)
     }
     last = m.index + m[0].length
   }
-  parts.push(...withBold(text.slice(last), `t${last}`))
-  return <div style={{ whiteSpace: 'pre-wrap', fontSize: 15, lineHeight: '23px' }}>{parts}</div>
+  parts.push(...withBold(text.slice(last), `${keyPrefix}t${last}`))
+  return parts
+}
+
+// Light Markdown: "### heading", "- bullet" (indented = nested), "1. numbered", plain paragraphs
+function parseBlocks(text) {
+  const blocks = []
+  for (const raw of text.split('\n')) {
+    const line = raw.replace(/\s+$/, '')
+    if (!line.trim()) continue
+    let m
+    if ((m = line.match(/^\s*#{1,4}\s+(.*)/))) blocks.push({ type: 'heading', text: m[1] })
+    else if ((m = line.match(/^(\s*)[-*•]\s+(.*)/))) blocks.push({ type: 'bullet', level: Math.floor(m[1].length / 2), text: m[2] })
+    else if ((m = line.match(/^(\s*)(\d+)[.)]\s+(.*)/))) blocks.push({ type: 'number', level: Math.floor(m[1].length / 2), n: m[2], text: m[3] })
+    else blocks.push({ type: 'para', text: line.trim() })
+  }
+  return blocks
+}
+
+// Group the blocks under their headings
+function toSections(blocks) {
+  const sections = [{ heading: null, items: [] }]
+  for (const b of blocks) {
+    if (b.type === 'heading') sections.push({ heading: b.text, items: [] })
+    else sections.at(-1).items.push(b)
+  }
+  return sections.filter((s) => s.heading || s.items.length)
+}
+
+export default function AnswerText({ text: raw, onPlay, peek }) {
+  const text = raw.replace(/CITE AS:\s*/g, '')
+  const sections = toSections(parseBlocks(text))
+
+  const renderItem = (b, key) => {
+    const content = renderInline(b.text, key, onPlay, peek)
+    if (b.type === 'para') return <p key={key} style={{ margin: 0 }}>{content}</p>
+    return (
+      <div key={key} style={{ display: 'flex', gap: 8, paddingLeft: b.level * 18 }}>
+        <span style={{ color: 'var(--mint)', fontWeight: 700, flex: 'none', minWidth: 14 }}>
+          {b.type === 'number' ? `${b.n}.` : '•'}
+        </span>
+        <span>{content}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 10, fontSize: 15, lineHeight: '23px' }}>
+      {sections.map((s, si) => {
+        const items = s.items.map((b, bi) => renderItem(b, `s${si}b${bi}`))
+        const day = s.heading?.match(/^Day\s*(\d+)\s*[:\-–]?\s*(.*)/i)
+
+        if (day) {   // study plan day → card
+          return (
+            <div key={si} style={{ display: 'grid', gap: 8, padding: '12px 14px', borderRadius: 12,
+                                   border: '1px solid var(--line)', background: 'var(--paper)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="badge badge-mint" style={{ flex: 'none' }}>Day {day[1]}</span>
+                <strong>{renderInline(day[2] || '', `h${si}`, onPlay, peek)}</strong>
+              </div>
+              {items}
+            </div>
+          )
+        }
+        return (
+          <div key={si} style={{ display: 'grid', gap: 6 }}>
+            {s.heading && <strong style={{ fontSize: 16 }}>{renderInline(s.heading, `h${si}`, onPlay, peek)}</strong>}
+            {items}
+          </div>
+        )
+      })}
+    </div>
+  )
 }

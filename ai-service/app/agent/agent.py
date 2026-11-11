@@ -28,7 +28,9 @@ Rules:
 - For requests to summarise the video, list its key points, or say what to remember for an exam,
   use the video_summary tool and cite the chapter timestamps.
 - Put each citation in its own parentheses exactly as CITE AS gives it, e.g. (2:23, URL) (page 8).
-  Never merge citations with ";" and never write a time without its link."""
+  Never merge citations with ";" and never write a time without its link.
+- For study plans, use the study_planner tool. Format each day as a heading "### Day N: <focus>" followed by
+  2-4 short bullet tasks that name the video or PDF. No separate "Focus" or "Tasks" lines. End with one short tip."""
 
 TOOL_STATUS = {
     "video_search": "🔎 Searching this video…",
