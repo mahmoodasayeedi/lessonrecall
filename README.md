@@ -4,7 +4,7 @@
 
 LessonRecall is an AI study assistant for course videos and slides. Learners ask questions by text or voice, in any language, and get answers that come **only** from the course material. Every answer links to the **exact minute** of the video or the **page** of the PDF where it was explained.
 
-Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedi
+Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedir
 
 **Live app:** https://lessonrecall.vercel.app
 
@@ -27,14 +27,15 @@ Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedi
 | **Final course quiz**               | Instructor generates a quiz across all materials, reviews it, sets a pass mark and publishes it. Learners get one attempt; grading happens on the server; class results for the instructor                                                                   |
 | **Languages & voice**               | Answer language per user (7 languages), voice input (browser speech recognition), read-aloud answers with a speaking avatar                                                                                                                                  |
 | **Roles**                           | Instructors create class courses; learners join from the catalog or create private courses. Owners can edit/delete; learners can leave                                                                                                                       |
-| **Evaluation**                      | LangSmith tracing and an evaluation set (see below)                                                                                                                                                                                                          |
+| **Evaluation**                      | LangSmith evaluation with 30 questions and 5 metrics; results are public on the [Evaluation page](https://lessonrecall.vercel.app/evaluation)                                                                                                                |
+| **Streaming answers**               | Tokens stream from the LangGraph agent through FastAPI (SSE) and Spring Boot (`SseEmitter`) to React, so answers appear word by word                                                                                                                         |
+| **Deployment**                      | Live on Vercel + Render; YouTube captions and titles are fetched through a residential proxy in the cloud                                                                                                                                                    |
 
 ### Planned (stretch goals)
 
-- Residential proxy so YouTube videos can be ingested directly from the cloud (see _Known limitation_)
-- Streaming answers (Server-Sent Events through Spring Boot)
 - Instructor dashboard with class insights (weakest topics across learners)
 - Version check for coding courses
+- Residential proxy for the Whisper fallback (audio download) in the cloud
 - Live lip-synced avatar, natural TTS voice, Whisper for voice questions
 - Google login, dark mode
 
@@ -136,6 +137,7 @@ All values have local defaults; in production they are set as environment variab
 |            | `EMBEDDING_MODEL`, `CHAT_MODEL`                               | Model choice                                            |
 |            | `LANGSMITH_API_KEY`, `LANGSMITH_TRACING`, `LANGSMITH_PROJECT` | Tracing and evaluation                                  |
 |            | `INTERNAL_API_TOKEN`                                          | Only Spring Boot may call the AI service                |
+|            | `WEBSHARE_PROXY_USERNAME`, `WEBSHARE_PROXY_PASSWORD`          | Residential proxy for YouTube (production only)         |
 | Backend    | `DB_URL`, `DB_USER`, `DB_PASSWORD`                            | PostgreSQL (JDBC URL)                                   |
 |            | `AI_SERVICE_URL`, `AI_SERVICE_TOKEN`                          | AI service address and the same internal token          |
 |            | `JWT_SECRET`                                                  | Signs login tokens                                      |
@@ -156,24 +158,33 @@ All values have local defaults; in production they are set as environment variab
 
 Production uses its own Pinecone index (`lessonrecall-prod`), so local and live data never mix.
 
-### Known limitation: YouTube from the cloud
+### YouTube from the cloud
 
-YouTube blocks requests from cloud server IPs, both for captions and for audio downloads. On the live app, the demo course was therefore ingested from a trusted machine directly into the production database and vector index. Chat, quizzes and everything else run fully in the cloud. **Planned fix:** a residential proxy for `youtube-transcript-api` and `yt-dlp`.
+YouTube blocks requests from cloud server IPs. The AI service therefore fetches captions and video titles (YouTube oEmbed) through a **rotating residential proxy** (Webshare), configured with `WEBSHARE_PROXY_USERNAME` / `WEBSHARE_PROXY_PASSWORD` on Render; locally no proxy is used. Usage is about 0.5 MB per video with a 100 % success rate.
+
+**Remaining limitation:** the Whisper fallback (audio download with `yt-dlp`) is not proxied yet, so on the live app only YouTube videos that have captions can be added. Uploads (MP4/MP3) work everywhere.
 
 ---
 
-### Evaluation
+## Evaluation (LangSmith)
 
-                      | LangSmith evaluation with 30 questions and 5 metrics; results are public on the [Evaluation page](https://lessonrecall.vercel.app/evaluation) |
+30 questions about two real courses (16 Neural Networks, 7 Java, 3 in German, 4 the courses don't cover), each with an expected answer, video and second (`ai-service/eval/questions.csv`). `python -m eval.run_eval` runs the real agent in whole-course mode as a LangSmith experiment and writes `frontend/public/eval-results.json`, which is shown on the [Evaluation page](https://lessonrecall.vercel.app/evaluation).
 
-A set of ~30 real questions about the demo course, measuring:
+| Metric                | How it is measured                                        | Result                      |
+| --------------------- | --------------------------------------------------------- | --------------------------- |
+| Accuracy              | LLM judge vs. reference answer; not-covered = no citation | **97 %**                    |
+| Grounded              | Answer cites a video minute or a slide page               | **96 %**                    |
+| Retrieval hit rate    | The expected video is cited                               | **85 %**                    |
+| Timestamp correctness | Cited minute within ±75 s (one chunk)                     | **73 %**                    |
+| Latency               | Full answer including follow-up suggestions               | **5.2 s** median, 6.8 s p90 |
 
-| Metric                        | Result          |
-| ----------------------------- | --------------- |
-| Answer accuracy               | _[to be added]_ |
-| Retrieval hit rate            | _[to be added]_ |
+The first run showed only 58 % retrieval hits. The misses revealed a real bug: the agent sometimes merged two citations in one bracket, which also made them unclickable in the app. After fixing `fix_citations` and the prompt, the hit rate rose to 85 %.
+
+----------------------------- | --------------- |
+| Answer accuracy | _[to be added]_ |
+| Retrieval hit rate | _[to be added]_ |
 | Timestamp correctness (±10 s) | _[to be added]_ |
-| Average latency               | _[to be added]_ |
+| Average latency | _[to be added]_ |
 
 ---
 
@@ -184,7 +195,7 @@ A set of ~30 real questions about the demo course, measuring:
 | Auth       | `POST /api/auth/register`, `/login`, `GET /me`, `PUT /password`, `GET/PUT /language`, `GET/PUT /avatar`                           |
 | Courses    | `GET/POST /api/courses`, `/mine`, `/catalog`, `POST /{id}/join`, `PUT/DELETE /{id}`, `DELETE /{id}/enrollment`                    |
 | Materials  | `POST /api/courses/{id}/materials/youtube`, `/upload`, `GET` list, `DELETE /{mid}`, `GET /{mid}/summary`, `/transcript`, `/quiz`  |
-| Chat       | `GET/POST /api/courses/{id}/chats`, `GET/POST /api/chats/{sid}/messages`                                                          |
+| Chat       | `GET/POST /api/courses/{id}/chats`, `GET/POST /api/chats/{sid}/messages`, `POST /api/chats/{sid}/messages/stream` (SSE)           |
 | Progress   | `POST /api/courses/{id}/quiz-results`, `GET /weak-topics`                                                                         |
 | Final quiz | `GET /api/courses/{id}/final-quiz`, `POST /generate`, `DELETE /questions/{qid}`, `POST /publish`, `POST /attempt`, `GET /results` |
 
@@ -192,7 +203,7 @@ A set of ~30 real questions about the demo course, measuring:
 
 ## Demo content
 
-The demo course uses the public _Neural Networks_ series by 3Blue1Brown on YouTube, used for educational demonstration only.
+The demo courses use the public _Neural Networks_ series by 3Blue1Brown and short _Java Basics_ videos by Guru99 on YouTube, used for educational demonstration only.
 
 ## Data and privacy
 
