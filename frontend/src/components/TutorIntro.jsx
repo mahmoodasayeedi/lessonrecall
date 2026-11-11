@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // "Meet your tutor" button: opens the intro video in a pop-up (plays with sound because the user clicked)
 export default function TutorIntro() {
@@ -23,7 +24,7 @@ export default function TutorIntro() {
         <span className="muted" style={{ fontWeight: 400, fontSize: 14 }}>19 s</span>
       </button>
 
-      {open && (
+      {open && createPortal(
         <div role="dialog" aria-modal="true" aria-label="Meet your LessonRecall tutor" onClick={() => setOpen(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(42,27,74,.6)', display: 'grid',
                    placeItems: 'center', padding: 24 }}>
@@ -36,7 +37,8 @@ export default function TutorIntro() {
               style={{ position: 'absolute', top: 10, right: 10, width: 36, height: 36, borderRadius: '50%', border: 'none',
                        background: 'rgba(255,255,255,.9)', fontSize: 18, cursor: 'pointer' }}>✕</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
