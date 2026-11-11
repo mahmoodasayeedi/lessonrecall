@@ -7,7 +7,7 @@ from app.rag.answer import format_time
 from app.agent.tools import get_llm, make_tools
 import json
 import logging
-
+from langchain_core.messages import ToolMessage
 log = logging.getLogger(__name__)
 SYSTEM_PROMPT = """You are LessonRecall, a friendly study assistant for one course.
 Rules:
@@ -30,6 +30,13 @@ Rules:
 - Put each citation in its own parentheses exactly as CITE AS gives it, e.g. (2:23, URL) (page 8).
   Never merge citations with ";" and never write a time without its link."""
 
+TOOL_STATUS = {
+    "video_search": "🔎 Searching this video…",
+    "course_search": "🔎 Searching the whole course…",
+    "video_summary": "📝 Reading the whole video…",
+    "quiz_generator": "🧩 Writing quiz questions…",
+    "study_planner": "🗓️ Planning your study steps…",
+}
 
 # Keeps every conversation in memory, by thread_id (lost when the server restarts)
 checkpointer = InMemorySaver()
@@ -101,9 +108,26 @@ def chat_stream(message, thread_id, course_id, video_id=None, language: str | No
         # stream_mode="messages" gives us every LLM token as it is generated
         for chunk, meta in agent.stream({"messages": [("user", message)]},
                                         config=config, stream_mode="messages"):
-            # Only tokens from the agent itself, not from LLM calls inside tools (summary, quiz)
-            if meta.get("langgraph_node") == "agent" and isinstance(chunk.content, str) and chunk.content:
-                yield sse({"type": "token", "text": chunk.content})
+            node = meta.get("langgraph_node")
+            if node == "agent":
+                # The agent decided to call a tool → tell the learner what it's doing
+                for call in getattr(chunk, "tool_call_chunks", None) or []:
+                    if call.get("name"):
+                        yield sse({"type": "status", "text": TOOL_STATUS.get(call["name"], "⚙️ Working…")})
+                # Answer text
+                if isinstance(chunk.content, str) and chunk.content:
+                    yield sse({"type": "token", "text": chunk.content})
+            elif node == "tools" and isinstance(chunk, ToolMessage):
+                # A tool finished → how many course moments did it find?
+                result = chunk.content if isinstance(chunk.content, str) else ""
+                found = result.count("CITE AS")
+                if "NO_RELEVANT_CONTENT" in result:
+                    text = "🤔 Nothing relevant found"
+                elif found:
+                    text = f"📄 Found {found} matching moment{'s' if found != 1 else ''}"
+                else:
+                    text = "✅ Done"
+                yield sse({"type": "status", "text": text})
 
         # Stream finished: build the clean final answer exactly like chat() does
         new_messages = agent.get_state(config).values["messages"][before:]

@@ -39,7 +39,7 @@ const recognizerRef = useRef(null)
     // Continue the newest chat of this course, if there is one
  
 const [language, setLanguage] = useState('')
-
+  const [steps, setSteps] = useState([])     // live agent steps while an answer is being prepared
 
 useEffect(() => {
   api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
@@ -82,6 +82,7 @@ const starters = STARTERS[language] ?? STARTERS.English
   async function send(text) {
     if (!text.trim() || busy) return
     setError('')
+    setSteps([])
     setSuggestions([])
     setBusy(true)
     setInput('')
@@ -108,8 +109,10 @@ const starters = STARTERS[language] ?? STARTERS.English
 
       let finished = false
       await apiStream(`/chats/${sid}/messages/stream`, body, (ev) => {
-        if (ev.type === 'token') {
-          update((x) => ({ ...x, content: x.content + ev.text }))
+        if (ev.type === 'status') {
+          setSteps((s) => [...s, ev.text])
+        } else if (ev.type === 'token') {
+              update((x) => ({ ...x, content: x.content + ev.text }))
         } else if (ev.type === 'done') {
           finished = true
           // Replace the raw text with the cleaned answer (correct citation links)
@@ -130,6 +133,7 @@ const starters = STARTERS[language] ?? STARTERS.English
       setError(err.message)
     } finally {
       setBusy(false)
+      setSteps([])
     }
   }
   // Tell the course page about the messages (for the Recall timeline pins)   ← NEW
@@ -219,8 +223,25 @@ function toggleMic() {
             speaking={speakingId === i}
             onListen={() => toggleSpeak(i, m.content)} />
         ))}
-                {busy && !messages.at(-1)?.content && (
-          <div className="muted" role="status">Thinking… searching the course</div>
+                       {busy && !messages.at(-1)?.content && (
+          <div role="status" aria-live="polite"
+               style={{ display: 'grid', gap: 6, padding: '12px 14px', borderRadius: 12, background: 'var(--soft)',
+                        border: '1px solid var(--line)', fontSize: 14, maxWidth: 420 }}>
+            {(steps.length ? steps : ['Thinking…']).map((s, i, all) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8,
+                                    color: i === all.length - 1 ? 'var(--ink)' : 'var(--muted)' }}>
+                <span style={{ width: 16, textAlign: 'center', color: 'var(--mint)' }}>
+                  {i === all.length - 1 ? '•' : '✓'}
+                </span>
+                {s}
+              </div>
+            ))}
+            {steps.length > 0 && !/Writing|Planning|Reading/.test(steps.at(-1)) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink)' }}>
+                <span style={{ width: 16, textAlign: 'center', color: 'var(--mint)' }}>•</span>✍️ Writing the answer…
+              </div>
+            )}
+          </div>
         )}
         <div ref={endRef} />
       </div>
