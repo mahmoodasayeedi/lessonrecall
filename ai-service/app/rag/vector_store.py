@@ -67,8 +67,10 @@ def list_documents(course_id: str) -> list[dict]:
     """All videos and PDFs in a course: [{"id", "title", "type"}]."""
     index = get_index()
     doc_ids = set()
-    for ids in index.list(namespace=course_id):
-        doc_ids.update(i.rsplit("-", 1)[0] for i in ids)   # "IHZwWFHWa-w-3" -> "IHZwWFHWa-w"
+    for page in index.list(namespace=course_id):
+        for item in page:
+            chunk_id = item if isinstance(item, str) else item.id      # newer Pinecone: ListItem objects
+            doc_ids.add(chunk_id.rsplit("-", 1)[0])                    # "IHZwWFHWa-w-3" -> "IHZwWFHWa-w"
 
     docs = []
     for doc_id in sorted(doc_ids):
