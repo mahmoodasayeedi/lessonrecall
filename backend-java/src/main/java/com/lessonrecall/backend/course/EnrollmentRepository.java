@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByUserId(Long userId);
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
-
+    List<Enrollment> findByCourseId(Long courseId);
     @Modifying
     @Query("delete from Enrollment e where e.course.id = :courseId")
     void deleteByCourseId(@Param("courseId") Long courseId);

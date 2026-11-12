@@ -10,7 +10,7 @@ import java.util.List;
 public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
     // Weak topics = wrong answers, newest first
     List<QuizResult> findByUserIdAndCourseIdAndCorrectFalseOrderByCreatedAtDesc(Long userId, Long courseId);
-
+    List<QuizResult> findByCourseIdOrderByCreatedAtDesc(Long courseId);
     @Modifying
     @Query("delete from QuizResult q where q.course.id = :courseId")
     void deleteByCourseId(@Param("courseId") Long courseId);

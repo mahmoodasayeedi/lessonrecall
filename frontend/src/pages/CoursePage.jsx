@@ -200,11 +200,12 @@ const loadMaterials = useCallback(() => {
             </div>
             <h1 style={{ fontSize: 26, marginTop: 2 }}>{selected?.title || course.title}</h1>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-        <Link className="btn" to={`/courses/${id}/final-quiz`}>🏁 Final quiz</Link>
-          <button className="btn" onClick={() => setChatOpen((o) => !o)} aria-pressed={!chatOpen}>
-            {chatOpen ? 'Hide chat' : 'Show chat'}
-          </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+            <Link className="btn" to={`/courses/${id}/final-quiz`}>🏁 Final quiz</Link>
+            {isOwner && <Link className="btn" to={`/courses/${id}/insights`}>📊 Insights</Link>}
+            <button className="btn" onClick={() => setChatOpen((o) => !o)} aria-pressed={!chatOpen}>
+              {chatOpen ? 'Hide chat' : 'Show chat'}
+            </button>
           </div>
         </div>
 

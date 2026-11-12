@@ -10,6 +10,7 @@ import Toaster from './components/Toaster'
 import FinalQuizPage from './pages/FinalQuizPage'
 import LandingPage from './pages/LandingPage'
 import EvaluationPage from './pages/EvaluationPage'
+import InsightsPage from './pages/InsightsPage'
 
 function Placeholder({ title }) {
   return (
@@ -33,6 +34,7 @@ export default function App() {
       <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
       <Route path="/courses/:id/final-quiz" element={<RequireAuth><FinalQuizPage /></RequireAuth>} />
       <Route path="/evaluation" element={<EvaluationPage />} />
+            <Route path="/courses/:id/insights" element={<RequireAuth><InsightsPage /></RequireAuth>} />
     </Routes>
     <Toaster />
     </>
