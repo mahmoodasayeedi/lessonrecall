@@ -58,18 +58,21 @@ public class ProgressController {
         int correct = (int) request.results().stream().filter(ResultItem::correct).count();
         return Map.of("saved", request.results().size(), "correct", correct);
     }
-
-    // Weak topics = wrong answers, newest first, one entry per question
+    // Weak topics = moments whose LATEST quiz answer was wrong (a later correct answer clears it)
     @GetMapping("/weak-topics")
     @Transactional(readOnly = true)
     public List<WeakTopic> weakTopics(@AuthenticationPrincipal Jwt jwt, @PathVariable Long courseId) {
         Long userId = Long.valueOf(jwt.getSubject());
         courses.requireAccess(userId, courseId);
-        Map<String, WeakTopic> unique = new LinkedHashMap<>();
-        for (QuizResult r : results.findByUserIdAndCourseIdAndCorrectFalseOrderByCreatedAtDesc(userId, courseId)) {
-            unique.putIfAbsent(r.getQuestion(), new WeakTopic(r.getQuestion(), r.getVideoId(), r.getStartSeconds(),
-                    r.getSourceLocation(), r.getSourceUrl(), r.getCreatedAt()));
+
+        Map<String, QuizResult> latest = new LinkedHashMap<>();       // newest first → first one per moment = latest
+        for (QuizResult r : results.findByUserIdAndCourseIdOrderByCreatedAtDesc(userId, courseId)) {
+            latest.putIfAbsent(r.getVideoId() + "@" + r.getStartSeconds(), r);
         }
-        return new ArrayList<>(unique.values());
+        return latest.values().stream()
+                .filter(r -> !r.isCorrect())
+                .map(r -> new WeakTopic(r.getQuestion(), r.getVideoId(), r.getStartSeconds(),
+                        r.getSourceLocation(), r.getSourceUrl(), r.getCreatedAt()))
+                .toList();
     }
 }

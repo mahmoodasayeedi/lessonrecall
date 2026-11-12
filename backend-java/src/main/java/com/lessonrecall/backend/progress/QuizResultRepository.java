@@ -18,5 +18,6 @@ public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
     @Modifying
     @Query("delete from QuizResult q where q.course.id = :courseId and q.videoId = :videoId")
     void deleteByCourseIdAndVideoId(@Param("courseId") Long courseId, @Param("videoId") String videoId);
+    List<QuizResult> findByUserIdAndCourseIdOrderByCreatedAtDesc(Long userId, Long courseId);
 
 }
