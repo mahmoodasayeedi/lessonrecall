@@ -21,11 +21,14 @@ Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedir
 | **Speech pipeline**                 | YouTube captions via `youtube-transcript-api`; if there are none, audio download with `yt-dlp` + **OpenAI Whisper** transcription. Also MP4/MP3/M4A/WAV uploads (Whisper) and PDF slides (one chunk per page). Video language can be chosen or auto-detected |
 | **RAG with minute-exact citations** | ~75 s chunks with 10 s overlap, OpenAI embeddings, **Pinecone** with one namespace per course. Citations are rebuilt deterministically from the timestamp, so links never point to an invented minute                                                        |
 | **Source peek**                     | Hover or focus a ▶ timestamp in an answer to see the exact transcript text it is based on, before playing the video |
+| **Highlight reel**                  | “🎬 Watch the answer” plays every moment cited in an answer back to back (25 s each, across videos) |
 | **Answer Guard**                    | Relevance threshold + prompt rules: if the course doesn't cover a question, LessonRecall says so instead of making something up                                                                                                                              |
 | **LangGraph agent**                 | Tools: `video_search`, `course_search`, `video_summary`, `quiz_generator`, `study_planner`; conversation memory per chat thread; follow-up suggestions; **live steps** while it works (“Searching this video… → Found 3 matching moments → Writing the answer…”) |
 | **Recall timeline**                 | Chapters, pins for every question asked, and rose **weak-topic zones** from missed quiz questions; click to replay                                                                                                                                           |
 | **Practice**                        | Quiz per video and 3D flip flashcards with “I knew it / Review again”; every answer links back to the moment it is explained, and missed cards end in a “worth rewatching” list |
 | **Study plan**                      | One click: goal, days and minutes per day → a day-by-day plan across the whole course, shown as day cards |
+| **Instructor insights**             | Class dashboard for the course owner: learners, questions asked, % correct, the video moments the class gets wrong most, one row per learner |
+| **Lesson check**                    | Before adding a YouTube video, the AI rates it for learning from its captions: clarity, structure, examples, depth, level, topics and outdated code |
 | **Final course quiz**               | Instructor generates a quiz across all materials, reviews it, sets a pass mark and publishes it. Learners get one attempt; grading happens on the server; class results for the instructor                                                                   |
 | **Languages & voice**               | Answer language per user (7 languages), voice input (browser speech recognition), read-aloud answers with a speaking avatar                                                                                                                                  |
 | **Tutor intro**                     | The landing page has a “Meet your tutor” button that plays a short lip-synced intro by the LessonRecall tutor character |
@@ -36,8 +39,8 @@ Final project · Ironhack AI Engineering bootcamp · Mahmooda Sayeedir
 
 ### Planned (stretch goals)
 
-- Instructor dashboard with class insights (weakest topics across learners)
-- Version check for coding courses
+- Search YouTube for a topic and rank the results with the Lesson check
+- Full version check of coding videos against current documentation
 - Residential proxy for the Whisper fallback (audio download) in the cloud
 - Live lip-synced avatar, natural TTS voice, Whisper for voice questions
 - Google login, dark mode
