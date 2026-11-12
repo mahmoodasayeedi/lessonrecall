@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, apiStream } from '../api'
-import AnswerText, { analyse } from './AnswerText'
+import AnswerText, { analyse, citedMoments } from './AnswerText'
 import ChatComposer from './ChatComposer'
 import { speak, stopSpeaking, createRecognizer } from './speech'
 import { toast } from './toast'
+
 
  const QUICK = {
   English: ['Explain that more simply', 'Give me an example', 'Quiz me on this'],
@@ -23,7 +24,18 @@ const STARTERS = {
   Urdu:    ['یہ ویڈیو کس بارے میں ہے؟', 'اہم نکات کا خلاصہ کریں', 'امتحان کے لیے مجھے کیا یاد رکھنا چاہیے؟'],
   Hindi:   ['यह वीडियो किस बारे में है?', 'मुख्य बिंदुओं का सारांश दें', 'परीक्षा के लिए मुझे क्या याद रखना चाहिए?'],
 }
+const CLIP_SECONDS = 25
 
+// Cited video moments of an answer, without duplicates, in answer order
+function uniqueMoments(text) {
+  const seen = new Set()
+  return citedMoments(text).filter((c) => {
+    const key = `${c.videoId}@${c.seconds}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
   export default function ChatPanel({ courseId, videoId, onPlay, peek, onMessagesChange }) {
   const [sessionId, setSessionId] = useState(null)
   const [messages, setMessages] = useState([])
@@ -39,9 +51,40 @@ const recognizerRef = useRef(null)
     // Continue the newest chat of this course, if there is one
  
 const [language, setLanguage] = useState('')
-  const [steps, setSteps] = useState([])     // live agent steps while an answer is being prepared
-  const [planOpen, setPlanOpen] = useState(false)
-  const [plan, setPlan] = useState({ goal: 'Prepare for the exam', days: 5, minutes: 30 })
+const [steps, setSteps] = useState([])     // live agent steps while an answer is being prepared
+const [reel, setReel] = useState(null)     // { clips, index, left } while the highlight reel plays
+
+ function startReel(text) {
+    const clips = uniqueMoments(text)
+    if (clips.length) setReel({ clips, index: 0, left: CLIP_SECONDS })
+  }
+
+  // Play the current clip whenever the reel moves on
+  useEffect(() => {
+    if (!reel) return
+    const c = reel.clips[reel.index]
+    onPlay(c.seconds, c.videoId)
+  }, [reel?.index, reel?.clips])   // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Countdown: one tick per second, next clip after CLIP_SECONDS, stop after the last one
+  useEffect(() => {
+    if (!reel) return
+    const timer = setInterval(() => setReel((r) => {
+      if (!r) return r
+      if (r.left > 1) return { ...r, left: r.left - 1 }
+      if (r.index + 1 < r.clips.length) return { ...r, index: r.index + 1, left: CLIP_SECONDS }
+      return null
+    }), 1000)
+    return () => clearInterval(timer)
+  }, [reel !== null])              // eslint-disable-line react-hooks/exhaustive-deps
+
+  const skipClip = () => setReel((r) => (r && r.index + 1 < r.clips.length
+    ? { ...r, index: r.index + 1, left: CLIP_SECONDS } : null))
+
+const [planOpen, setPlanOpen] = useState(false)
+const [plan, setPlan] = useState({ goal: 'Prepare for the exam', days: 5, minutes: 30 })
+
+  
 
 useEffect(() => {
   api('/auth/language').then((r) => setLanguage(r.language ?? '')).catch(() => {})
@@ -225,9 +268,10 @@ function toggleMic() {
           <div key={m.id} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink)', color: '#fff',
                                    padding: '10px 14px', borderRadius: '14px 14px 4px 14px', fontSize: 14 }}>{m.content}</div>
         ) : (
-            <AnswerCard key={m.id ?? i} message={m} onPlay={onPlay} peek={peek}
-            speaking={speakingId === i}
-            onListen={() => toggleSpeak(i, m.content)} />
+              <AnswerCard key={m.id ?? i} message={m} onPlay={onPlay} peek={peek}
+              onReel={() => startReel(m.content)}
+              speaking={speakingId === i}
+              onListen={() => toggleSpeak(i, m.content)} />
         ))}
                        {busy && !messages.at(-1)?.content && (
           <div role="status" aria-live="polite"
@@ -306,6 +350,21 @@ function toggleMic() {
           </div>
         </div>
       )}
+            {reel && (
+        <div role="status" aria-live="polite"
+             style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12,
+                      background: 'var(--ink)', color: '#fff', fontSize: 14 }}>
+          <span style={{ whiteSpace: 'nowrap' }}>
+            🎬 Clip {reel.index + 1} of {reel.clips.length} · {reel.index + 1 < reel.clips.length ? 'next' : 'ends'} in {reel.left}s
+          </span>
+          <div style={{ flex: 1, height: 6, borderRadius: 999, background: 'rgba(255,255,255,.2)', overflow: 'hidden' }}>
+            <div style={{ width: `${((CLIP_SECONDS - reel.left) / CLIP_SECONDS) * 100}%`, height: '100%',
+                          background: 'var(--mint)', transition: 'width 1s linear' }} />
+          </div>
+          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={skipClip}>Skip</button>
+          <button className="btn" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setReel(null)}>Stop</button>
+        </div>
+      )}
         <ChatComposer
         value={input}
         onChange={setInput}
@@ -319,7 +378,7 @@ function toggleMic() {
   )
 }
 
-function AnswerCard({ message, onPlay,peek, speaking, onListen }) {
+function AnswerCard({ message, onPlay, peek, onReel, speaking, onListen }) {
     if (message.streaming) {
     return (
       <div style={{ border: '1px solid var(--line)', borderRadius: 14, padding: 16, background: '#fff',
@@ -350,6 +409,11 @@ function AnswerCard({ message, onPlay,peek, speaking, onListen }) {
         <button className="btn" onClick={onListen} style={{ padding: '4px 12px', fontSize: 13 }}>
           {speaking ? '■ Stop' : '🔊 Listen'}
         </button>
+        {uniqueMoments(message.content).length > 1 && (
+          <button className="btn" onClick={onReel} style={{ padding: '4px 12px', fontSize: 13 }}>
+            🎬 Watch the answer ({uniqueMoments(message.content).length} clips)
+          </button>
+        )}
         {message.toolsUsed?.length > 0 && (
           <span className="muted" style={{ fontSize: 12 }}>Used: {message.toolsUsed.join(', ')}</span>
         )}

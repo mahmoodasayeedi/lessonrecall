@@ -19,7 +19,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import org.springframework.http.HttpStatus;
-
+import org.springframework.core.ParameterizedTypeReference;
+import java.util.Map;
 @Component
 public class AiClient {
 
@@ -27,6 +28,14 @@ public class AiClient {
 
     public AiClient(RestClient aiRestClient) {
         this.rest = aiRestClient;
+    }
+
+    public Map<String, Object> lessonCheck(String url) {
+        return rest.post().uri("/lesson-check")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("url", url))
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
     }
 
     public AskResponse ask(String question, String courseSlug, String videoId) {

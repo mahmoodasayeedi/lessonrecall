@@ -45,6 +45,8 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from app.rag.summary import summarize_video
 from app.rag.summary import load_video_chunks
 from app.rag.vector_store import delete_course_vectors, delete_document_vectors
+from app.models import LessonCheckRequest
+from app.rag.lesson_check import check_lesson
 
 OPEN_PATHS = {"/health", "/docs", "/openapi.json"}
 
@@ -214,3 +216,8 @@ def chat_stream_endpoint(request: ChatRequest) -> StreamingResponse:
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+@app.post("/lesson-check", responses=ERROR_RESPONSES)
+def lesson_check(request: LessonCheckRequest):
+    """Is this YouTube video good for learning? Rated from its captions; nothing is indexed."""
+    return check_lesson(request.url)
